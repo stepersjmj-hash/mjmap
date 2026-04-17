@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>나만의 경기도 지도 - 지역화폐·문화행사·주유소</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%BA%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --money: #10b981;
+    --culture: #f59e0b;
+    --gas: #ef4444;
+    --favorite: #ec4899;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', 'Noto Sans KR', sans-serif; color: var(--text); background: var(--bg); -webkit-tap-highlight-color: transparent; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    z-index: 100;
+  }
+  header h1 { font-size: 17px; font-weight: 700; }
+  header .actions { display: flex; gap: 8px; }
+  header button {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  header button:hover { background: rgba(255,255,255,0.3); }
+
+  #mapWrap { flex: 1; position: relative; min-height: 0; }
+  #map { width: 100%; height: 100%; }
+
+  .filter-bar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 10px;
+    z-index: 50;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .chip {
+    padding: 7px 12px;
+    border-radius: 20px;
+    border: 2px solid var(--border);
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    color: var(--text-muted);
+  }
+  .chip.active[data-cat="money"] { background: var(--money); border-color: var(--money); color: white; }
+  .chip.active[data-cat="culture"] { background: var(--culture); border-color: var(--culture); color: white; }
+  .chip.active[data-cat="gas"] { background: var(--gas); border-color: var(--gas); color: white; }
+  .chip.active[data-cat="fav"] { background: var(--favorite); border-color: var(--favorite); color: white; }
+
+  .control-stack {
+    position: absolute;
+    bottom: 24px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 50;
+  }
+  .ctrl-btn {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ctrl-btn:hover { background: #f1f5f9; }
+
+  /* Side Panel for list / favorites / settings */
+  .panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 380px;
+    max-width: 90%;
+    height: 100%;
+    background: white;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel.open { transform: translateX(0); }
+  .panel-header {
+    padding: 16px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-header h2 { font-size: 16px; }
+  .panel-header button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  .panel-body { flex: 1; overflow-y: auto; padding: 12px; }
+
+  .list-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .list-item:hover { background: #f8fafc; }
+  .list-item .info { flex: 1; min-width: 0; }
+  .list-item .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .list-item .meta { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .list-item .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: white;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .badge.money { background: var(--money); }
+  .badge.culture { background: var(--culture); }
+  .badge.gas { background: var(--gas); }
+
+  .fav-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px;
+    color: #d1d5db;
+  }
+  .fav-btn.active { color: var(--favorite); }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 16px; font-size: 18px; }
+  .modal label { display: block; margin: 12px 0 6px; font-size: 13px; font-weight: 600; color: var(--text); }
+  .modal input, .modal select, .modal textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .modal .help { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .modal .btn-row { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+  .modal button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-secondary { background: #e5e7eb; color: var(--text); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(31, 41, 55, 0.95);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 13px;
+    z-index: 400;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Loading */
+  .loading {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(31,41,55,0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 60;
+    display: none;
+  }
+  .loading.show { display: block; }
+
+  /* Info window content */
+  .iw {
+    padding: 12px 14px;
+    min-width: 220px;
+    max-width: 280px;
+    font-family: inherit;
+  }
+  .iw h3 { font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .iw p { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.4; }
+  .iw .iw-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .iw .iw-actions button {
+    flex: 1;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary);
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .iw .iw-actions .fav-iw { background: #f3f4f6; color: var(--text); }
+  .iw .iw-actions .fav-iw.active { background: var(--favorite); color: white; }
+
+  /* Setup screen */
+  #setupScreen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #setupScreen .card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  #setupScreen h1 { font-size: 22px; margin-bottom: 8px; color: var(--primary); }
+  #setupScreen p.lead { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 15px; }
+    .filter-bar { padding: 8px; gap: 4px; }
+    .chip { padding: 6px 10px; font-size: 12px; }
+    .panel { width: 85%; max-width: 85%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 초기 설정 화면 -->
+<div id="setupScreen">
+  <div class="card">
+    <h1>🗺️ 나만의 경기도 지도</h1>
+    <p class="lead">지역화폐 가맹점, 문화행사, 주유소 정보를 한 지도에서 확인하고 즐겨찾기할 수 있어요. 시작하기 위해 API 키 두 개를 입력해주세요.</p>
+
+    <label>네이버 지도 API Client ID <span style="color:#ef4444">*</span></label>
+    <input id="naverKeyInput" type="text" placeholder="예: a1b2c3d4e5" />
+    <p class="help">네이버 클라우드 플랫폼(<a href="https://www.ncloud.com" target="_blank">ncloud.com</a>)에서 Maps → Web Dynamic Map 신청 후 발급</p>
+
+    <label>경기도 공공데이터 API 키 <span style="color:#ef4444">*</span></label>
+    <input id="ggKeyInput" type="text" placeholder="예: 1234567890abcdef..." />
+    <p class="help">경기도 공공데이터포털(<a href="https://data.gg.go.kr" target="_blank">data.gg.go.kr</a>)에서 발급</p>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveSetup()">시작하기</button>
+    </div>
+    <p class="help" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+      💡 키는 브라우저 localStorage에만 저장되며, 외부로 전송되지 않습니다.
+    </p>
+  </div>
+</div>
+
+<header>
+  <h1>🗺️ 나만의 경기도 지도</h1>
+  <div class="actions">
+    <button onclick="openPanel('list')" title="목록">📋</button>
+    <button onclick="openPanel('fav')" title="즐겨찾기">⭐</button>
+    <button onclick="openSettings()" title="설정">⚙️</button>
+  </div>
+</header>
+
+<div id="mapWrap">
+  <div id="map"></div>
+
+  <div class="filter-bar">
+    <button class="chip" data-cat="money" onclick="toggleCategory('money')">💳 지역화폐</button>
+    <button class="chip" data-cat="culture" onclick="toggleCategory('culture')">🎭 문화행사</button>
+    <button class="chip" data-cat="gas" onclick="toggleCategory('gas')">⛽ 주유소</button>
+    <button class="chip" data-cat="fav" onclick="toggleCategory('fav')">⭐ 즐겨찾기</button>
+  </div>
+
+  <div class="loading" id="loadingIndicator">데이터를 불러오는 중...</div>
+
+  <div class="control-stack">
+    <button class="ctrl-btn" onclick="goToMyLocation()" title="내 위치">📍</button>
+    <button class="ctrl-btn" onclick="reloadCurrentArea()" title="현재 지도에서 다시 검색">🔄</button>
+  </div>
+</div>
+
+<!-- 사이드 패널 -->
+<div class="panel" id="sidePanel">
+  <div class="panel-header">
+    <h2 id="panelTitle">목록</h2>
+    <button onclick="closePanel()">×</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ 설정</h2>
+    <label>네이버 지도 API Client ID</label>
+    <input id="naverKeyEdit" type="text" />
+    <label>경기도 공공데이터 API 키</label>
+    <input id="ggKeyEdit" type="text" />
+    <label>Opinet(한국석유공사) 인증키 <span style="font-weight:normal;color:var(--text-muted);">— 주유소용 (선택)</span></label>
+    <input id="opinetKeyEdit" type="text" placeholder="예: F1234567890ABCDE" />
+    <p class="help">opinet.co.kr에서 발급. 주유소는 Opinet API 사용 (프록시 서버 실행 필요)</p>
+    <label>카카오 REST API 키 <span style="font-weight:normal;color:var(--text-muted);">— 문화행사 좌표 폴백용 (선택)</span></label>
+    <input id="kakaoKeyEdit" type="text" placeholder="예: 1234567890abcdef..." />
+    <p class="help"><a href="https://developers.kakao.com" target="_blank">developers.kakao.com</a> → 플랫폼 키 → REST API 키 복사. 프록시 경유로 호출하므로 도메인 등록 불필요. 네이버 지오코딩 실패 시 카카오 Places로 폴백.</p>
+    <label>검색 반경 (m)</label>
+    <select id="radiusSelect">
+      <option value="500">500m</option>
+      <option value="1000" selected>1km</option>
+      <option value="2000">2km</option>
+      <option value="5000">5km</option>
+      <option value="0">제한 없음 (지도 전체)</option>
+    </select>
+    <label>한번에 가져올 데이터 수</label>
+    <select id="pageSizeSelect">
+      <option value="100">100개</option>
+      <option value="500" selected>500개</option>
+      <option value="1000">1000개 (최대)</option>
+    </select>
+
+    <label style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="autoSigunCheck" style="width:auto;" />
+      <span>📍 내 위치로 시군 자동 감지 <span style="font-weight:normal;color:var(--text-muted);">(위치 버튼 누를 때)</span></span>
+    </label>
+
+    <label>🏙️ 시군 필터 <span style="font-weight:normal;color:var(--text-muted);">— 지역화폐·문화행사</span></label>
+    <select id="sigunSelect">
+      <option value="">전체 (필터 없음)</option>
+      <option value="수원시">수원시</option>
+      <option value="성남시">성남시</option>
+      <option value="고양시">고양시</option>
+      <option value="용인시">용인시</option>
+      <option value="부천시">부천시</option>
+      <option value="안산시">안산시</option>
+      <option value="안양시">안양시</option>
+      <option value="화성시">화성시</option>
+      <option value="남양주시">남양주시</option>
+      <option value="평택시">평택시</option>
+      <option value="의정부시">의정부시</option>
+      <option value="시흥시">시흥시</option>
+      <option value="파주시">파주시</option>
+      <option value="광명시">광명시</option>
+      <option value="김포시">김포시</option>
+      <option value="군포시">군포시</option>
+      <option value="광주시">광주시</option>
+      <option value="이천시">이천시</option>
+      <option value="양주시">양주시</option>
+      <option value="오산시">오산시</option>
+      <option value="구리시">구리시</option>
+      <option value="안성시">안성시</option>
+      <option value="포천시">포천시</option>
+      <option value="의왕시">의왕시</option>
+      <option value="하남시">하남시</option>
+      <option value="여주시">여주시</option>
+      <option value="동두천시">동두천시</option>
+      <option value="과천시">과천시</option>
+      <option value="양평군">양평군</option>
+      <option value="가평군">가평군</option>
+      <option value="연천군">연천군</option>
+    </select>
+    <p class="help">특정 시군을 선택하면 해당 지역 데이터만 가져와서 지도에 표시돼요. 전체 조회 시 수만 건이라 첫 500~1000개만 나옵니다.</p>
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <p style="font-size:13px;font-weight:600;margin-bottom:8px;">📡 경기도 API 서비스명</p>
+      <p class="help" style="margin-bottom:12px;">data.gg.go.kr 마이페이지 → 활용신청내역 → 해당 API → 요청 URL 에서 확인. 예: <code>https://openapi.gg.go.kr/<b>서비스명</b>?KEY=...</code></p>
+      <label>💳 지역화폐 가맹점 서비스명</label>
+      <input id="svcMoneyInput" type="text" placeholder="예: RegionMnyFacltStus" />
+      <label>🎭 문화행사 서비스명</label>
+      <input id="svcCultureInput" type="text" placeholder="예: GGCULTUREVENTSTUS" />
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeSettings()">취소</button>
+      <button class="btn-primary" onclick="saveSettings()">저장</button>
+    </div>
+    <p class="help" style="margin-top:16px;">
+      <strong>도움이 필요하세요?</strong><br>
+      • 마커가 안 보이면 카테고리 칩(💳🎭⛽)을 눌러 활성화하세요.<br>
+      • 데이터가 안 불러와지면 브라우저 콘솔(F12)에서 오류를 확인하세요.<br>
+      • CORS 오류 발생 시 README의 해결 방법을 참조하세요.
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// 상태 관리
+// ============================================================
+const STATE = {
+  naverKey: localStorage.getItem('naverKey') || '',
+  ggKey: localStorage.getItem('ggKey') || '',
+  opinetKey: localStorage.getItem('opinetKey') || '',
+  kakaoKey: localStorage.getItem('kakaoKey') || '',
+  radius: parseInt(localStorage.getItem('radius') || '5000'),
+  pageSize: parseInt(localStorage.getItem('pageSize') || '500'),
+  services: JSON.parse(localStorage.getItem('services') || JSON.stringify({
+    money: 'RegionMnyFacltStus',       // 경기지역화폐 가맹점
+    culture: 'GGCULTUREVENTSTUS'       // 경기도 문화행사
+  })),
+  sigun: localStorage.getItem('sigun') || '',  // SIGUN_NM 필터 (예: 성남시, 수원시)
+  autoSigun: localStorage.getItem('autoSigun') !== 'false',  // 내 위치 기반 자동 시군 감지 (기본 on)
+  favorites: JSON.parse(localStorage.getItem('favorites') || '{}'),
+  active: { money: false, culture: false, gas: false, fav: true },
+  markers: { money: [], culture: [], gas: [], fav: [] },
+  data: { money: [], culture: [], gas: [] },
+  map: null,
+  myLocationMarker: null,
+  currentInfoWindow: null,
+  centerPos: { lat: 37.4138, lng: 127.5183 } // 경기도청 부근 (기본값)
+};
+
+// ============================================================
+// 초기 설정
+// ============================================================
+function saveSetup() {
+  const naverKey = document.getElementById('naverKeyInput').value.trim();
+  const ggKey = document.getElementById('ggKeyInput').value.trim();
+  if (!naverKey || !ggKey) {
+    alert('두 개의 API 키를 모두 입력해주세요.');
+    return;
+  }
+  localStorage.setItem('naverKey', naverKey);
+  localStorage.setItem('ggKey', ggKey);
+  STATE.naverKey = naverKey;
+  STATE.ggKey = ggKey;
+  document.getElementById('setupScreen').style.display = 'none';
+  loadNaverScript();
+}
+
+function checkSetup() {
+  if (STATE.naverKey && STATE.ggKey) {
+    document.getElementById('setupScreen').style.display = 'none';
+    loadNaverScript();
+  }
+}
+
+function openSettings() {
+  document.getElementById('naverKeyEdit').value = STATE.naverKey;
+  document.getElementById('ggKeyEdit').value = STATE.ggKey;
+  document.getElementById('opinetKeyEdit').value = STATE.opinetKey;
+  document.getElementById('kakaoKeyEdit').value = STATE.kakaoKey;
+  document.getElementById('radiusSelect').value = STATE.radius;
+  document.getElementById('pageSizeSelect').value = STATE.pageSize;
+  document.getElementById('sigunSelect').value = STATE.sigun;
+  document.getElementById('autoSigunCheck').checked = STATE.autoSigun;
+  document.getElementById('svcMoneyInput').value = STATE.services.money;
+  document.getElementById('svcCultureInput').value = STATE.services.culture;
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function saveSettings() {
+  const newNaver = document.getElementById('naverKeyEdit').value.trim();
+  const newGg = document.getElementById('ggKeyEdit').value.trim();
+  const newOpinet = document.getElementById('opinetKeyEdit').value.trim();
+  const newKakao = document.getElementById('kakaoKeyEdit').value.trim();
+  STATE.radius = parseInt(document.getElementById('radiusSelect').value);
+  STATE.pageSize = parseInt(document.getElementById('pageSizeSelect').value);
+  STATE.sigun = document.getElementById('sigunSelect').value;
+  STATE.autoSigun = document.getElementById('autoSigunCheck').checked;
+  localStorage.setItem('autoSigun', STATE.autoSigun ? 'true' : 'false');
+  STATE.services.money = document.getElementById('svcMoneyInput').value.trim() || 'RegionMnyFacltStus';
+  STATE.services.culture = document.getElementById('svcCultureInput').value.trim() || 'GGCULTUREVENTSTUS';
+  STATE.opinetKey = newOpinet;
+  STATE.kakaoKey = newKakao;
+  localStorage.setItem('kakaoKey', newKakao);
+  localStorage.setItem('radius', STATE.radius);
+  localStorage.setItem('pageSize', STATE.pageSize);
+  localStorage.setItem('sigun', STATE.sigun);
+  localStorage.setItem('services', JSON.stringify(STATE.services));
+  localStorage.setItem('opinetKey', newOpinet);
+  let needReload = false;
+  if (newNaver !== STATE.naverKey) { localStorage.setItem('naverKey', newNaver); needReload = true; }
+  if (newGg !== STATE.ggKey) { localStorage.setItem('ggKey', newGg); needReload = true; }
+  closeSettings();
+  showToast('설정이 저장되었습니다.');
+  if (needReload) location.reload();
+  else reloadCurrentArea();
+}
+
+// ============================================================
+// 네이버 지도 로드
+// ============================================================
+async function loadNaverScript() {
+  window.navermap_authFailure = function() {
+    console.error('[네이버지도] 인증 실패 — Client ID 오류 또는 Web 서비스 URL 미등록');
+    alert(
+      '❌ 네이버 지도 인증 실패\n\n' +
+      '원인: Client ID가 잘못되었거나, 현재 주소가 Web 서비스 URL에 등록되지 않음.\n\n' +
+      '해결:\n' +
+      '1) NCP 콘솔 > Maps > Application > 인증정보에서 Client ID 확인\n' +
+      '2) 같은 앱의 "Web 서비스 URL"에 "' + location.origin + '" 등록\n' +
+      '(저장 후 반영까지 수 분 소요될 수 있음)'
+    );
+  };
+
+  // 여러 URL 패턴 시도 (NCP는 경로가 모두 소문자여야 함)
+  // submodules=geocoder: 역지오코딩(위경도→주소) 기능 활성화
+  const sub = '&submodules=geocoder';
+  const candidates = [
+    { url: `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(STATE.naverKey)}${sub}`, label: 'NCP ncpKeyId (신규)' },
+    { url: `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${encodeURIComponent(STATE.naverKey)}${sub}`, label: 'NCP ncpClientId (구버전)' },
+    { url: `https://openapi.map.naver.com/openapi/v3/maps.js?clientId=${encodeURIComponent(STATE.naverKey)}${sub}`, label: 'openapi.map (Naver Developers)' }
+  ];
+
+  for (const cand of candidates) {
+    try {
+      // fetch로 먼저 상태 확인 (CORS로 body는 못 읽지만 network error vs HTTP error 구분 가능)
+      console.log(`[네이버지도] ${cand.label} 진단 중: ${cand.url}`);
+      const res = await fetch(cand.url, { method: 'GET', mode: 'no-cors' });
+      // no-cors 모드에서는 상태를 못 읽지만 요청이 성공하면 여기 도달
+      console.log(`[네이버지도] ${cand.label} 네트워크 응답 받음, <script> 태그로 실행 시도`);
+      await loadScriptTag(cand.url);
+      if (typeof naver !== 'undefined' && naver.maps) {
+        console.log(`[네이버지도] ✅ ${cand.label} 성공`);
+        initMap();
+        return;
+      } else {
+        console.warn(`[네이버지도] ${cand.label} 스크립트는 로드됐으나 naver 객체 없음 (인증 실패 가능성)`);
+      }
+    } catch (e) {
+      console.error(`[네이버지도] ${cand.label} 실패:`, e.message);
+    }
+  }
+
+  // 모든 URL 실패
+  alert(
+    '❌ 네이버 지도 스크립트 로드 실패\n\n' +
+    '시도한 URL 3가지 모두 실패했습니다. F12 Console을 확인해주세요.\n\n' +
+    '가장 흔한 원인:\n' +
+    '1) NCP 콘솔에서 "Web Dynamic Map" 서비스가 활성화되지 않음\n' +
+    '   (Application 편집 → 서비스 이용 정보 → Web Dynamic Map 체크)\n' +
+    '2) 결제 수단이 등록되지 않음 (무료 쿼터여도 결제 수단 필요)\n' +
+    '3) 현재 주소 "' + location.origin + '" 이 Web 서비스 URL에 미등록\n\n' +
+    '참고: NCP 콘솔의 "서비스 이용 정보" 섹션에 공식 샘플 스크립트 태그가 있으니,\n' +
+    '그 src URL을 그대로 복사해서 index.html line ~495의 URL과 비교해보세요.'
+  );
+}
+
+function loadScriptTag(url) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = () => setTimeout(resolve, 200); // 네이버 SDK 초기화 대기
+    script.onerror = () => reject(new Error('script onerror (404 or CORS)'));
+    document.head.appendChild(script);
+  });
+}
+
+function initMap() {
+  STATE.map = new naver.maps.Map('map', {
+    center: new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng),
+    zoom: 14,
+    zoomControl: true,
+    zoomControlOptions: { position: naver.maps.Position.TOP_RIGHT }
+  });
+
+  // 지도 빈 영역 클릭 시 열려있는 정보창 + 우측 사이드 패널 닫기
+  naver.maps.Event.addListener(STATE.map, 'click', function() {
+    if (STATE.currentInfoWindow) {
+      STATE.currentInfoWindow.close();
+      STATE.currentInfoWindow = null;
+    }
+    closePanel();
+  });
+
+  // 설정 모달의 어두운 배경 클릭 시 모달 닫기 (모달 본문 클릭 시에는 유지)
+  const modalBg = document.getElementById('settingsModal');
+  if (modalBg) {
+    modalBg.addEventListener('click', function(e) {
+      if (e.target === modalBg) closeSettings();
+    });
+  }
+
+  // 자동으로 사용자 위치 시도
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        STATE.centerPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        STATE.map.setCenter(new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng));
+        addMyLocationMarker();
+        // 자동 시군 감지
+        if (STATE.autoSigun) {
+          detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng).catch(() => {});
+        }
+        // 즐겨찾기는 자동 표시
+        renderFavorites();
+      },
+      err => { console.warn('위치 정보 사용 불가:', err); renderFavorites(); },
+      { timeout: 5000 }
+    );
+  } else {
+    renderFavorites();
+  }
+
+  // 지도 이동 시 즐겨찾기는 항상 유지
+}
+
+function addMyLocationMarker() {
+  if (STATE.myLocationMarker) STATE.myLocationMarker.setMap(null);
+  STATE.myLocationMarker = new naver.maps.Marker({
+    position: new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng),
+    map: STATE.map,
+    icon: {
+      content: `<div style="width:18px;height:18px;background:#2563eb;border:3px solid white;border-radius:50%;box-shadow:0 0 0 8px rgba(37,99,235,0.25);"></div>`,
+      anchor: new naver.maps.Point(12, 12)
+    },
+    zIndex: 1000
+  });
+}
+
+function goToMyLocation() {
+  if (!navigator.geolocation) {
+    showToast('위치 정보를 사용할 수 없습니다.');
+    return;
+  }
+  showToast('위치를 가져오는 중...');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      STATE.centerPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      STATE.map.setCenter(new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng));
+      STATE.map.setZoom(15);
+      addMyLocationMarker();
+      // 내 위치 기반 자동 시군 감지 (설정에서 꺼둔 경우 제외)
+      if (STATE.autoSigun !== false) {
+        detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng)
+          .then(() => reloadCurrentArea())
+          .catch(() => reloadCurrentArea());
+      } else {
+        reloadCurrentArea();
+      }
+    },
+    err => {
+      showToast('위치 정보를 가져올 수 없습니다.');
+      console.error(err);
+    }
+  );
+}
+
+// ============================================================
+// 역지오코딩: 위경도 → 시/군구/동 (네이버 지도 SDK 내장)
+// ============================================================
+function detectSigunFromLocation(lat, lng) {
+  return new Promise((resolve, reject) => {
+    if (typeof naver === 'undefined' || !naver.maps.Service || !naver.maps.Service.reverseGeocode) {
+      console.warn('[역지오코딩] naver.maps.Service.reverseGeocode 없음 — submodules=geocoder 미로드 또는 NCP에서 서비스 미활성');
+      showToast('역지오코딩 기능 미사용 가능 (NCP에서 Reverse Geocoding 활성화 필요)');
+      return reject(new Error('Service unavailable'));
+    }
+    const latlng = new naver.maps.LatLng(lat, lng);
+    naver.maps.Service.reverseGeocode({
+      coords: latlng,
+      orders: [
+        naver.maps.Service.OrderType.ADDR,
+        naver.maps.Service.OrderType.ROAD_ADDR
+      ].join(',')
+    }, function(status, response) {
+      if (status !== naver.maps.Service.Status.OK) {
+        console.error('[역지오코딩] 실패, status:', status);
+        showToast('역지오코딩 실패 — 설정에서 시군 직접 선택하세요.');
+        return reject(new Error('reverseGeocode status not OK'));
+      }
+      try {
+        const results = response.v2.results;
+        if (!results || results.length === 0) {
+          return reject(new Error('No results'));
+        }
+        // 가장 상세한 주소 (보통 첫번째)
+        const region = results[0].region;
+        const area1 = (region.area1 && region.area1.name) || '';  // 시도 (경기도)
+        const area2 = (region.area2 && region.area2.name) || '';  // 시군구 (성남시 분당구 / 수원시 영통구 / 가평군)
+        const area3 = (region.area3 && region.area3.name) || '';  // 읍면동
+
+        // SIGUN_NM은 시/군 단위 (예: "성남시", "가평군"). 구는 공백으로 구분되어 뒤에 붙음.
+        const sigun = area2.split(' ')[0];
+
+        console.log(`[역지오코딩] ✅ ${area1} > ${area2} > ${area3} → SIGUN_NM=${sigun}`);
+
+        // 경기도 아니면 경고
+        if (area1 && !area1.includes('경기')) {
+          showToast(`📍 현재 위치: ${area1} ${area2} (경기도 밖이라 필터 미적용)`);
+          STATE.sigun = '';
+        } else if (sigun) {
+          STATE.sigun = sigun;
+          showToast(`📍 ${area2}${area3 ? ' ' + area3 : ''} · 시군 필터: ${sigun}`);
+        }
+        localStorage.setItem('sigun', STATE.sigun);
+        // 설정 UI 드롭다운도 동기화
+        const sel = document.getElementById('sigunSelect');
+        if (sel) sel.value = STATE.sigun;
+        resolve({ area1, area2, area3, sigun });
+      } catch (e) {
+        console.error('[역지오코딩] 파싱 오류:', e);
+        reject(e);
+      }
+    });
+  });
+}
+
+// ============================================================
+// API 호출 - 경기도 공공데이터 (CORS 우회를 위해 GET 사용 + JSON)
+// 경기도 openapi.gg.go.kr는 표준 형식:
+//   /{서비스명}?KEY=...&Type=json&pIndex=1&pSize=100&[추가파라미터]
+// ============================================================
+const API_BASE = 'http://localhost:8080/proxy?url=https://openapi.gg.go.kr';
+
+async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
+  const qs = new URLSearchParams({
+    KEY: STATE.ggKey,
+    Type: 'json',
+    pIndex: '1',
+    pSize: String(pSize),
+    ...params
+  });
+  const url = `${API_BASE}/${service}?${qs.toString()}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    // 경기도 API 응답 구조: { 서비스명: [ { head: [...] }, { row: [...] } ] }
+    const root = data[service];
+    if (!root) {
+      // 에러 응답 처리
+      if (data.RESULT) {
+        console.error('API 에러:', data.RESULT);
+        showToast(`API 오류: ${data.RESULT.MESSAGE || '알 수 없음'}`);
+      }
+      return [];
+    }
+    const rowBlock = root.find(item => item.row);
+    return rowBlock ? rowBlock.row : [];
+  } catch (e) {
+    console.error(`API 호출 실패 (${service}):`, e);
+    if (e.message.includes('Failed to fetch') || e.name === 'TypeError') {
+      showToast('CORS 차단? README의 프록시 안내를 확인하세요.');
+    } else {
+      showToast(`데이터 로드 실패: ${e.message}`);
+    }
+    return [];
+  }
+}
+
+// 카테고리별 데이터 로드
+async function loadMoneyData() {
+  const params = STATE.sigun ? { SIGUN_NM: STATE.sigun } : {};
+  return fetchGGApi(STATE.services.money, params);
+}
+async function loadCultureData() {
+  const params = STATE.sigun ? { SIGUN_NM: STATE.sigun } : {};
+  const events = await fetchGGApi(STATE.services.culture, params);
+  if (!events || events.length === 0) return [];
+
+  // 문화행사 API는 좌표가 없으므로 INST_NM 등을 지오코딩/검색으로 좌표 부여
+  // 너무 많이 호출하면 rate limit 걸릴 수 있어 최대 30개만
+  const limit = Math.min(events.length, 30);
+  console.log(`[culture] 좌표 부여 위해 ${limit}개 항목 지오코딩 시작 (Naver→Kakao 폴백)`);
+
+  // 같은 기관명 캐싱
+  const cache = {};
+  let naverHit = 0, kakaoHit = 0;
+
+  const tasks = events.slice(0, limit).map(async (ev) => {
+    const query = (ev.HOST_INST_NM || ev.INST_NM || ev.TITLE || '').trim();
+    if (!query) return ev;
+    if (cache[query] !== undefined) {
+      const cached = cache[query];
+      if (cached) {
+        ev._LAT = cached.lat;
+        ev._LNG = cached.lng;
+        if (cached.addr) ev._ADDR = cached.addr;
+      }
+      return ev;
+    }
+    // 1차: Naver 지오코딩 (주소 기반)
+    let result = await geocodeAddress(query);
+    if (result) naverHit++;
+
+    // 2차: Kakao Places API 폴백 (기관/상호 검색 특화)
+    if (!result) {
+      result = await kakaoSearchPlace(query);
+      if (result) kakaoHit++;
+    }
+
+    cache[query] = result;
+    if (result) {
+      ev._LAT = result.lat;
+      ev._LNG = result.lng;
+      if (result.addr) ev._ADDR = result.addr;
+    }
+    return ev;
+  });
+  const processed = await Promise.all(tasks);
+  const successCount = processed.filter(e => e._LAT && e._LNG).length;
+  console.log(`[culture] 지오코딩 성공: ${successCount}/${limit}개 (Naver ${naverHit} + Kakao ${kakaoHit})`);
+  return processed.concat(events.slice(limit));
+}
+
+// 주소/기관명 → 위경도 변환 (Naver forward geocoding)
+function geocodeAddress(query) {
+  return new Promise((resolve) => {
+    if (typeof naver === 'undefined' || !naver.maps.Service || !naver.maps.Service.geocode) {
+      return resolve(null);
+    }
+    naver.maps.Service.geocode({ query }, (status, response) => {
+      try {
+        if (status !== naver.maps.Service.Status.OK) return resolve(null);
+        const addrs = response?.v2?.addresses;
+        if (!addrs || addrs.length === 0) return resolve(null);
+        const a = addrs[0];
+        resolve({
+          lat: parseFloat(a.y),
+          lng: parseFloat(a.x),
+          addr: a.roadAddress || a.jibunAddress || ''
+        });
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  });
+}
+
+// 카카오 Places 키워드 검색 (기관/업체명 특화)
+// CORS 차단 대응: 프록시 경유 사용 (proxy.py가 Authorization 헤더를 전달함)
+async function kakaoSearchPlace(query) {
+  if (!STATE.kakaoKey) return null;
+  const kakaoBase = 'https://dapi.kakao.com/v2/local/search/keyword.json';
+  const proxyPrefix = API_BASE.startsWith('http://localhost') ? API_BASE.split('/proxy')[0] + '/proxy?url=' : '';
+  const url = proxyPrefix
+    ? `${proxyPrefix}${encodeURIComponent(kakaoBase)}&query=${encodeURIComponent(query)}&size=1`
+    : `${kakaoBase}?query=${encodeURIComponent(query)}&size=1`;
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': `KakaoAK ${STATE.kakaoKey}` }
+    });
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '(본문 없음)');
+      console.warn(`[Kakao] HTTP ${res.status} for "${query}":`, errBody);
+      return null;
+    }
+    const data = await res.json();
+    const docs = data.documents;
+    if (!docs || docs.length === 0) return null;
+    const doc = docs[0];
+    return {
+      lat: parseFloat(doc.y),
+      lng: parseFloat(doc.x),
+      addr: doc.road_address_name || doc.address_name || '',
+      placeName: doc.place_name
+    };
+  } catch (e) {
+    console.error('[Kakao] 검색 실패:', e);
+    return null;
+  }
+}
+
+// ============================================================
+// Opinet (한국석유공사) API - 주유소 데이터
+// aroundAll.do: 내 주변 주유소 (반경 최대 5km)
+// 좌표계: TM Katec (x, y in meters) — Naver 지도의 WGS84와 변환 필요
+// CORS: 차단되어 있어 proxy.py 경유 필수
+// ============================================================
+async function loadGasData() {
+  if (!STATE.opinetKey) {
+    showToast('⚙️ 설정에서 Opinet 인증키를 먼저 입력하세요.');
+    return [];
+  }
+  if (typeof naver === 'undefined' || !naver.maps.TransCoord) {
+    showToast('네이버 지도 좌표 변환 기능이 로드되지 않았어요.');
+    return [];
+  }
+  // 현재 중심을 WGS84 → TM Katec 으로 변환
+  const centerLL = new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng);
+  const tm = naver.maps.TransCoord.fromLatLngToTM128(centerLL);
+  const tmX = tm.x;
+  const tmY = tm.y;
+  const radius = Math.min(STATE.radius || 3000, 5000); // Opinet 최대 5km
+
+  // 프록시 경유 (API_BASE 와 동일한 프록시 사용). OPINET_BASE도 proxy.py 통해서 호출
+  const proxyPrefix = API_BASE.startsWith('http://localhost') ? API_BASE.split('/proxy')[0] + '/proxy?url=' : '';
+  const opinetBase = 'https://www.opinet.co.kr/api/aroundAll.do';
+  const targetUrl = proxyPrefix ? `${proxyPrefix}${encodeURIComponent(opinetBase)}` : opinetBase;
+
+  const params = new URLSearchParams({
+    code: STATE.opinetKey,
+    x: String(tmX),
+    y: String(tmY),
+    radius: String(radius),
+    sort: '1',      // 1:가격순, 2:거리순
+    prodcd: 'B027', // B027=휘발유, D047=경유, K015=LPG, B034=고급휘발유
+    out: 'xml'      // Opinet 공식 예시는 xml. json은 alertCheck.jsp로 리다이렉트됨
+  });
+  const url = proxyPrefix ? `${targetUrl}&${params.toString()}` : `${targetUrl}?${params.toString()}`;
+
+  try {
+    console.log('[Opinet] 요청 URL:', url);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const oils = parseOpinetXml(text);
+    console.log(`[Opinet] ${oils.length}개 주유소 조회됨`);
+
+    // TM Katec → WGS84 로 역변환하여 lat/lng 필드 주입
+    return oils.map(item => {
+      const gx = parseFloat(item.GIS_X_COOR);
+      const gy = parseFloat(item.GIS_Y_COOR);
+      if (gx && gy) {
+        const ll = naver.maps.TransCoord.fromTM128ToLatLng(new naver.maps.Point(gx, gy));
+        item._LAT = ll.y;
+        item._LNG = ll.x;
+      }
+      return item;
+    });
+  } catch (e) {
+    console.error('[Opinet] 호출 실패:', e);
+    showToast('주유소 데이터 로드 실패 (프록시 실행 중이고 인증키가 맞는지 확인)');
+    return [];
+  }
+}
+
+// Opinet XML 응답 파서 (DOMParser 사용, 추가 라이브러리 불필요)
+// 응답 구조 예: <RESULT><OIL><UNI_ID>...</UNI_ID><OS_NM>...</OS_NM>...</OIL>...</RESULT>
+function parseOpinetXml(text) {
+  try {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'application/xml');
+
+    // 파싱 에러 체크
+    const parseError = xml.querySelector('parsererror');
+    if (parseError) {
+      console.error('[Opinet] XML 파싱 에러:', parseError.textContent);
+      return [];
+    }
+
+    const oilNodes = xml.getElementsByTagName('OIL');
+    return Array.from(oilNodes).map(node => {
+      const obj = {};
+      for (const child of node.children) {
+        obj[child.tagName] = (child.textContent || '').trim();
+      }
+      return obj;
+    });
+  } catch (e) {
+    console.error('[Opinet] XML 파싱 예외:', e);
+    return [];
+  }
+}
+
+// ============================================================
+// 좌표 추출 헬퍼 - 경기도 API는 다양한 필드명을 사용
+// ============================================================
+function getLatLng(item) {
+  const lat = parseFloat(
+    item._LAT || // Opinet에서 변환된 값 (우선)
+    item.REFINE_WGS84_LAT || item.LAT || item.LATITUDE || item.WGS84LAT ||
+    item.YCRD || item.Y_CRDNT || item.MAP_Y || 0
+  );
+  const lng = parseFloat(
+    item._LNG || // Opinet에서 변환된 값 (우선)
+    item.REFINE_WGS84_LOGT || item.LNG || item.LON || item.LONGITUDE || item.WGS84LOGT ||
+    item.XCRD || item.X_CRDNT || item.MAP_X || 0
+  );
+  return { lat, lng };
+}
+
+function getName(item) {
+  return item.TITLE || item.CMPNM_NM || item.FCLTY_NM || item.GAS_STN_NM || item.OS_NM ||
+         item.NM || item.EVENT_NM || item.BIZ_NM || '이름 없음';
+}
+
+function getAddr(item) {
+  return item._ADDR ||   // 지오코딩/검색으로 확보한 주소 (우선)
+         item.REFINE_ROADNM_ADDR || item.REFINE_LOTNO_ADDR || item.ADDR ||
+         item.ROAD_ADDR || item.NEW_ADR || item.LOC || item.PLACE ||
+         item.INST_NM || item.HOST_INST_NM || '';
+}
+
+// Opinet 상표 코드 → 한글 브랜드명 매핑
+// 공식 문서 기준 (실제 응답 필드는 POLL_DIV_CO - 문서 오탈자와 다름)
+const POLL_DIV_LABEL = {
+  SKE: 'SK에너지',
+  GSC: 'GS칼텍스',
+  HDO: 'HD현대오일뱅크',
+  SOL: 'S-OIL',
+  RTE: '자영알뜰',
+  RTX: '고속도로알뜰',
+  NHO: '농협알뜰',
+  ETC: '자가상표',
+  E1G: 'E1',
+  SKG: 'SK가스'
+};
+
+function getCategory(item) {
+  // 주유소 상표 + 가격 처리 (Opinet 실제 응답은 POLL_DIV_CO, 문서는 POLL_DIV_CD — 둘 다 체크)
+  const pollCode = item.POLL_DIV_CO || item.POLL_DIV_CD;
+  if (pollCode) {
+    const brand = POLL_DIV_LABEL[pollCode] || pollCode;
+    const priceStr = item.PRICE ? ' · ' + Number(item.PRICE).toLocaleString() + '원' : '';
+    return brand + priceStr;
+  }
+  return item.INDUTYPE_NM || item.CATEGORY_NM || item.CATEGORY ||
+         item.EVENT_GU_NM || item.SIGUN_NM || '';
+}
+
+function buildId(cat, item) {
+  const ll = getLatLng(item);
+  return `${cat}::${getName(item)}::${ll.lat.toFixed(5)}_${ll.lng.toFixed(5)}`;
+}
+
+// 거리 계산 (km)
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// 반경 필터
+function filterByRadius(items, centerLat, centerLng, radiusM) {
+  if (!radiusM || radiusM === 0) return items;
+  const radiusKm = radiusM / 1000;
+  return items.filter(item => {
+    const ll = getLatLng(item);
+    if (!ll.lat || !ll.lng) return false;
+    return distanceKm(centerLat, centerLng, ll.lat, ll.lng) <= radiusKm;
+  });
+}
+
+// ============================================================
+// 마커 렌더링
+// ============================================================
+const ICONS = {
+  money: { color: '#10b981', emoji: '💳', label: '지역화폐' },
+  culture: { color: '#f59e0b', emoji: '🎭', label: '문화행사' },
+  gas: { color: '#ef4444', emoji: '⛽', label: '주유소' }
+};
+
+// 주유소 최저가 순위(1~3위)별 스타일 (금/은/동)
+const RANK_STYLES = {
+  1: { color: '#FFD700', emoji: '🥇', size: 40 },  // 금
+  2: { color: '#C0C0C0', emoji: '🥈', size: 38 },  // 은
+  3: { color: '#CD7F32', emoji: '🥉', size: 36 }   // 동
+};
+
+function makeMarkerIcon(cat, isFav, rank, item) {
+  const conf = ICONS[cat] || { color: '#6b7280', emoji: '📍' };
+  const ringColor = isFav ? '#ec4899' : 'white';
+  // 순위가 있으면 (주유소 상위 3개) 메달 스타일 적용
+  if (rank && RANK_STYLES[rank]) {
+    const r = RANK_STYLES[rank];
+    // 1위만 가격 태그 추가 표시
+    const showPrice = rank === 1 && item && item.PRICE;
+    const priceStr = showPrice ? `${Number(item.PRICE).toLocaleString()}원` : '';
+
+    const pinSize = r.size;
+    const containerWidth = showPrice ? 90 : pinSize + 10;
+    const tagHeight = showPrice ? 26 : 0;
+    const tagGap = showPrice ? 4 : 0;
+    const containerHeight = tagHeight + tagGap + pinSize + 10;
+    const pinLeft = (containerWidth - pinSize) / 2;
+    const pinTop = tagHeight + tagGap;
+
+    const tagHtml = showPrice ? `
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:white;border:2px solid #16a34a;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;color:#16a34a;line-height:18px;box-shadow:0 2px 6px rgba(0,0,0,0.25);white-space:nowrap;">${priceStr}</div>
+        <div style="position:absolute;left:50%;top:${tagHeight - 2}px;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #16a34a;"></div>
+      ` : '';
+
+    return {
+      content: `<div style="position:relative;width:${containerWidth}px;height:${containerHeight}px;">
+        ${tagHtml}
+        <div style="position:absolute;top:${pinTop}px;left:${pinLeft}px;width:${pinSize}px;height:${pinSize}px;background:${r.color};border:3px solid ${ringColor};border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,0.4);"></div>
+        <div style="position:absolute;top:${pinTop + 4}px;left:${pinLeft + 4}px;font-size:${pinSize - 14}px;line-height:${pinSize - 8}px;width:${pinSize - 8}px;text-align:center;">${r.emoji}</div>
+      </div>`,
+      anchor: new naver.maps.Point(containerWidth / 2, containerHeight - 4)
+    };
+  }
+  return {
+    content: `<div style="position:relative;width:32px;height:42px;">
+      <div style="position:absolute;top:0;left:0;width:32px;height:32px;background:${conf.color};border:3px solid ${ringColor};border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
+      <div style="position:absolute;top:5px;left:6px;font-size:16px;line-height:20px;width:20px;text-align:center;">${conf.emoji}</div>
+    </div>`,
+    anchor: new naver.maps.Point(16, 38)
+  };
+}
+
+function clearMarkers(cat) {
+  STATE.markers[cat].forEach(m => m.setMap(null));
+  STATE.markers[cat] = [];
+}
+
+function renderMarkers(cat, items) {
+  clearMarkers(cat);
+
+  // 주유소: 최저가 상위 3개에 _RANK 부여 (1=금, 2=은, 3=동)
+  if (cat === 'gas') {
+    // 기존 _RANK 초기화
+    items.forEach(it => { delete it._RANK; });
+    const sortable = items.filter(it => {
+      const p = parseFloat(it.PRICE);
+      return p > 0 && getLatLng(it).lat;
+    });
+    sortable.sort((a, b) => parseFloat(a.PRICE) - parseFloat(b.PRICE));
+    sortable.slice(0, 3).forEach((it, idx) => { it._RANK = idx + 1; });
+  }
+
+  // 같은 좌표(소수점 4자리까지 동일)의 항목들을 그룹화하여 클러스터 마커로 표시
+  const groups = {};
+  items.forEach(item => {
+    const ll = getLatLng(item);
+    if (!ll.lat || !ll.lng) return;
+    const key = `${ll.lat.toFixed(4)}_${ll.lng.toFixed(4)}`;
+    if (!groups[key]) groups[key] = { lat: ll.lat, lng: ll.lng, items: [] };
+    groups[key].items.push(item);
+  });
+
+  Object.values(groups).forEach(group => {
+    if (group.items.length === 1) {
+      // 단일 마커 (기존 동작)
+      const item = group.items[0];
+      const id = buildId(cat, item);
+      const isFav = !!STATE.favorites[id];
+      const rank = item._RANK; // 주유소 1~3위만 값 있음
+      // 순위 마커는 z-index 높여서 다른 마커 위에 표시
+      const zIndex = rank ? (700 - rank * 10) : undefined; // 1등=690, 2등=680, 3등=670
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(group.lat, group.lng),
+        map: STATE.map,
+        icon: makeMarkerIcon(cat, isFav, rank, item),
+        title: rank ? `🏆 ${rank}위 최저가 - ${getName(item)}` : getName(item),
+        ...(zIndex !== undefined ? { zIndex } : {})
+      });
+      naver.maps.Event.addListener(marker, 'click', () => openInfoWindow(marker, cat, item));
+      STATE.markers[cat].push(marker);
+    } else {
+      // 클러스터 마커 (숫자 배지)
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(group.lat, group.lng),
+        map: STATE.map,
+        icon: makeClusterIcon(cat, group.items.length),
+        title: `${ICONS[cat].label} ${group.items.length}건`,
+        zIndex: 200
+      });
+      naver.maps.Event.addListener(marker, 'click', () => openClusterPanel(cat, group));
+      STATE.markers[cat].push(marker);
+    }
+  });
+}
+
+// 클러스터 마커 아이콘 (카테고리 색상 + 숫자 배지)
+function makeClusterIcon(cat, count) {
+  const conf = ICONS[cat] || { color: '#6b7280', emoji: '📍' };
+  const countText = count > 99 ? '99+' : String(count);
+  return {
+    content: `<div style="position:relative;width:44px;height:52px;">
+      <div style="position:absolute;top:0;left:0;width:44px;height:44px;background:${conf.color};border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.35);"></div>
+      <div style="position:absolute;top:8px;left:8px;font-size:18px;line-height:22px;width:28px;text-align:center;">${conf.emoji}</div>
+      <div style="position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 6px;background:#ec4899;color:white;border:2px solid white;border-radius:11px;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.3);">${countText}</div>
+    </div>`,
+    anchor: new naver.maps.Point(22, 48)
+  };
+}
+
+// 클러스터 클릭 시 사이드 패널에 해당 좌표의 모든 항목 표시
+function openClusterPanel(cat, group) {
+  // 지도 줌인
+  STATE.map.setCenter(new naver.maps.LatLng(group.lat, group.lng));
+  if (STATE.map.getZoom() < 15) STATE.map.setZoom(15);
+
+  const panel = document.getElementById('sidePanel');
+  const title = document.getElementById('panelTitle');
+  const body = document.getElementById('panelBody');
+  panel.classList.add('open');
+  title.textContent = `${ICONS[cat].emoji} ${ICONS[cat].label} ${group.items.length}건 (같은 위치)`;
+  body.innerHTML = group.items.map(item => renderListItem(cat, item, !!STATE.favorites[buildId(cat, item)])).join('');
+}
+
+// target: Marker 객체 또는 LatLng (둘 다 infoWindow.open에서 지원)
+function openInfoWindow(target, cat, item) {
+  if (STATE.currentInfoWindow) STATE.currentInfoWindow.close();
+  const id = buildId(cat, item);
+  const isFav = !!STATE.favorites[id];
+  const conf = ICONS[cat];
+  const name = getName(item);
+  const addr = getAddr(item);
+  const category = getCategory(item);
+  const ll = getLatLng(item);
+
+  // 문화행사 필드
+  const periodStart = item.BEGIN_DE || '';
+  const periodEnd = item.END_DE || '';
+  const period = periodStart && periodEnd ? `${periodStart} ~ ${periodEnd}` : (periodStart || periodEnd);
+  const timeInfo = item.EVENT_TM_INFO || '';
+  const admission = item.PARTCPT_EXPN_INFO || '';
+  const phone = item.TELNO || item.TELNO_INFO || '';
+  const detailUrl = item.URL || item.HMPG_URL || '';
+  const imageUrl = item.IMAGE_URL || '';
+  const host = item.HOST_INST_NM || item.INST_NM || '';
+
+  const content = `
+    <div class="iw">
+      ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px;" onerror="this.style.display='none'" />` : ''}
+      <h3>${conf.emoji} ${escapeHtml(name)}</h3>
+      ${category ? `<p><strong>${escapeHtml(category)}</strong></p>` : ''}
+      ${host && cat === 'culture' ? `<p>🏛️ ${escapeHtml(host)}</p>` : ''}
+      ${addr ? `<p>📍 ${escapeHtml(addr)}</p>` : ''}
+      ${period ? `<p>📅 ${escapeHtml(period)}</p>` : ''}
+      ${timeInfo ? `<p>🕐 ${escapeHtml(timeInfo)}</p>` : ''}
+      ${admission ? `<p>🎫 ${escapeHtml(admission)}</p>` : ''}
+      ${phone ? `<p>📞 ${escapeHtml(phone)}</p>` : ''}
+      ${item.EVENT_PERIOD ? `<p>📅 ${escapeHtml(item.EVENT_PERIOD)}</p>` : ''}
+      ${item.GASOLINE_PRICE ? `<p>⛽ 휘발유: ${item.GASOLINE_PRICE}원</p>` : ''}
+      ${item.DIESEL_PRICE ? `<p>⛽ 경유: ${item.DIESEL_PRICE}원</p>` : ''}
+      ${detailUrl ? `<p><a href="${escapeHtml(detailUrl)}" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:underline;">🔗 상세 정보 보기</a></p>` : ''}
+      <div class="iw-actions">
+        <button class="fav-iw ${isFav?'active':''}" onclick="toggleFavoriteFromIW('${id.replace(/'/g, "\\'")}', '${cat}')">${isFav ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기'}</button>
+        <button onclick="openNaverDirections(${ll.lat}, ${ll.lng}, '${escapeHtml(name).replace(/'/g, "\\'")}')">🚗 길찾기</button>
+      </div>
+    </div>
+  `;
+
+  const infoWindow = new naver.maps.InfoWindow({
+    content: content,
+    borderColor: conf.color,
+    borderWidth: 2,
+    pixelOffset: new naver.maps.Point(0, -8)
+  });
+  infoWindow.open(STATE.map, target);
+  STATE.currentInfoWindow = infoWindow;
+
+  // 즐겨찾기 데이터 저장 (전체 정보)
+  STATE._lastClickedItem = { cat, item, id };
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function openNaverDirections(lat, lng, name) {
+  // 네이버 지도 길찾기 URL (자동차 모드)
+  //   - 출발지 위치는 "-"로 비워 네이버 지도가 브라우저의 현재 위치를 사용하도록 함
+  //   - 도착지: lng,lat,이름,,PLACE_POI 포맷
+  const destName = encodeURIComponent(name || '목적지');
+  const url = `https://map.naver.com/p/directions/-/${lng},${lat},${destName},,PLACE_POI/-/car`;
+  window.open(url, '_blank');
+}
+
+// ============================================================
+// 즐겨찾기 관리
+// ============================================================
+function toggleFavoriteFromIW(id, cat) {
+  if (STATE.favorites[id]) {
+    delete STATE.favorites[id];
+    showToast('즐겨찾기 해제');
+  } else {
+    // 가장 최근 클릭된 항목 정보 저장
+    if (STATE._lastClickedItem && STATE._lastClickedItem.id === id) {
+      STATE.favorites[id] = {
+        cat,
+        item: STATE._lastClickedItem.item,
+        addedAt: Date.now()
+      };
+    }
+    showToast('즐겨찾기 추가 ⭐');
+  }
+  localStorage.setItem('favorites', JSON.stringify(STATE.favorites));
+  // 마커와 인포윈도우 새로고침
+  renderActiveCategories();
+  renderFavorites();
+  if (STATE.currentInfoWindow) STATE.currentInfoWindow.close();
+}
+
+function renderFavorites() {
+  clearMarkers('fav');
+  if (!STATE.active.fav) return;
+  Object.values(STATE.favorites).forEach(fav => {
+    const ll = getLatLng(fav.item);
+    if (!ll.lat || !ll.lng) return;
+    const conf = ICONS[fav.cat] || { color: '#ec4899', emoji: '⭐' };
+    const marker = new naver.maps.Marker({
+      position: new naver.maps.LatLng(ll.lat, ll.lng),
+      map: STATE.map,
+      icon: {
+        content: `<div style="position:relative;width:34px;height:44px;">
+          <div style="position:absolute;top:0;left:0;width:34px;height:34px;background:${conf.color};border:3px solid #ec4899;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(236,72,153,0.5);"></div>
+          <div style="position:absolute;top:5px;left:7px;font-size:16px;line-height:20px;width:20px;text-align:center;">${conf.emoji}</div>
+          <div style="position:absolute;top:-4px;right:-4px;background:#ec4899;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;">★</div>
+        </div>`,
+        anchor: new naver.maps.Point(17, 40)
+      },
+      title: getName(fav.item),
+      zIndex: 500
+    });
+    naver.maps.Event.addListener(marker, 'click', () => openInfoWindow(marker, fav.cat, fav.item));
+    STATE.markers.fav.push(marker);
+  });
+}
+
+// ============================================================
+// 카테고리 토글
+// ============================================================
+async function toggleCategory(cat) {
+  // 즐겨찾기는 독립적으로 on/off (다른 카테고리에 영향 없음)
+  if (cat === 'fav') {
+    STATE.active.fav = !STATE.active.fav;
+    document.querySelector(`.chip[data-cat="fav"]`).classList.toggle('active', STATE.active.fav);
+    renderFavorites();
+    return;
+  }
+
+  // 데이터 카테고리(money/culture/gas)는 라디오 동작:
+  // - 같은 칩 다시 클릭 → off
+  // - 다른 칩 클릭 → 이전 칩 자동 off + 새 칩 on
+  const wasActive = STATE.active[cat];
+
+  // 같은 카테고리 클릭 → 단순히 끄기
+  if (wasActive) {
+    STATE.active[cat] = false;
+    document.querySelector(`.chip[data-cat="${cat}"]`).classList.remove('active');
+    clearMarkers(cat);
+    return;
+  }
+
+  // 다른 데이터 카테고리들 모두 끄기
+  for (const c of ['money', 'culture', 'gas']) {
+    if (c !== cat && STATE.active[c]) {
+      STATE.active[c] = false;
+      document.querySelector(`.chip[data-cat="${c}"]`).classList.remove('active');
+      clearMarkers(c);
+    }
+  }
+
+  // 선택한 카테고리 활성화
+  STATE.active[cat] = true;
+  document.querySelector(`.chip[data-cat="${cat}"]`).classList.add('active');
+  await syncWithMapView();
+  await loadAndRenderCategory(cat);
+}
+
+// ============================================================
+// 현재 지도 뷰와 STATE 동기화 (centerPos + 시군 자동 감지)
+// ============================================================
+async function syncWithMapView() {
+  if (!STATE.map) return;
+  const center = STATE.map.getCenter();
+  STATE.centerPos = { lat: center.y, lng: center.x };
+  console.log(`[syncMapView] 중심: ${STATE.centerPos.lat.toFixed(4)}, ${STATE.centerPos.lng.toFixed(4)}`);
+  if (STATE.autoSigun) {
+    try {
+      await detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng);
+    } catch (e) {
+      console.warn('[syncMapView] 역지오코딩 실패, 기존 sigun 유지:', STATE.sigun);
+    }
+  }
+}
+
+async function loadAndRenderCategory(cat) {
+  showLoading(true);
+  try {
+    let items;
+    if (cat === 'money') items = await loadMoneyData();
+    else if (cat === 'culture') items = await loadCultureData();
+    else if (cat === 'gas') items = await loadGasData();
+
+    items = items || [];
+    console.log(`[${cat}] API 응답 ${items.length}개 받음. 샘플:`, items[0]);
+
+    // 좌표 필드가 있는 항목만 집계
+    const withCoords = items.filter(it => {
+      const ll = getLatLng(it);
+      return ll.lat && ll.lng;
+    });
+    console.log(`[${cat}] 좌표 있는 항목: ${withCoords.length}개`);
+
+    // 반경 필터링
+    const filtered = filterByRadius(items, STATE.centerPos.lat, STATE.centerPos.lng, STATE.radius);
+    console.log(`[${cat}] 반경 ${STATE.radius}m 내: ${filtered.length}개 (중심 ${STATE.centerPos.lat.toFixed(4)},${STATE.centerPos.lng.toFixed(4)})`);
+
+    STATE.data[cat] = filtered;
+    renderMarkers(cat, filtered);
+
+    // 안내 메시지
+    if (items.length === 0) {
+      showToast(`${ICONS[cat].label}: API 응답이 비어 있어요. 콘솔 확인.`);
+    } else if (withCoords.length === 0) {
+      showToast(`${ICONS[cat].label}: ${items.length}개 받았지만 좌표 필드 없음. F12 확인.`);
+      console.warn(`[${cat}] 좌표 필드를 찾을 수 없음. 첫 항목 키:`, Object.keys(items[0] || {}));
+    } else if (filtered.length === 0) {
+      showToast(`${ICONS[cat].label}: 반경 내 0개. ⚙️설정에서 반경을 "제한 없음"으로 변경해보세요.`);
+    } else {
+      showToast(`${ICONS[cat].label} ${filtered.length}개 표시 (전체 ${items.length}개 중)`);
+    }
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function renderActiveCategories() {
+  for (const cat of ['money', 'culture', 'gas']) {
+    if (STATE.active[cat]) await loadAndRenderCategory(cat);
+  }
+}
+
+async function reloadCurrentArea() {
+  // 현재 지도 뷰 기준으로 시군 감지 + 데이터 다시 조회
+  await syncWithMapView();
+  await renderActiveCategories();
+  renderFavorites();
+}
+
+// ============================================================
+// 사이드 패널 (목록 / 즐겨찾기)
+// ============================================================
+function openPanel(mode) {
+  const panel = document.getElementById('sidePanel');
+  const title = document.getElementById('panelTitle');
+  const body = document.getElementById('panelBody');
+  panel.classList.add('open');
+
+  if (mode === 'fav') {
+    title.textContent = '⭐ 즐겨찾기';
+    const favs = Object.entries(STATE.favorites);
+    if (favs.length === 0) {
+      body.innerHTML = '<p style="text-align:center;color:#6b7280;padding:40px 20px;">즐겨찾기한 장소가 없습니다.<br>지도의 마커를 클릭하여 추가해보세요.</p>';
+      return;
+    }
+    body.innerHTML = favs.map(([id, fav]) => renderListItem(fav.cat, fav.item, true, id)).join('');
+  } else {
+    title.textContent = '📋 현재 표시 중인 장소';
+    let html = '';
+    let total = 0;
+    for (const cat of ['money', 'culture', 'gas']) {
+      if (STATE.active[cat] && STATE.data[cat].length > 0) {
+        html += `<h3 style="padding:8px 12px;font-size:13px;color:#6b7280;">${ICONS[cat].emoji} ${ICONS[cat].label} (${STATE.data[cat].length})</h3>`;
+        html += STATE.data[cat].slice(0, 50).map(item => renderListItem(cat, item, !!STATE.favorites[buildId(cat, item)])).join('');
+        total += STATE.data[cat].length;
+      }
+    }
+    if (total === 0) {
+      html = '<p style="text-align:center;color:#6b7280;padding:40px 20px;">상단의 카테고리 칩(💳🎭⛽)을 눌러 데이터를 표시해보세요.</p>';
+    }
+    body.innerHTML = html;
+  }
+}
+
+function renderListItem(cat, item, isFav, favId) {
+  const conf = ICONS[cat];
+  const id = favId || buildId(cat, item);
+  const safeId = id.replace(/'/g, "\\'");
+  return `
+    <div class="list-item" onclick="openItemFromList('${safeId}', '${cat}')">
+      <div class="info">
+        <div class="title"><span class="badge ${cat}">${conf.label}</span>${escapeHtml(getName(item))}</div>
+        <div class="meta">${escapeHtml(getCategory(item))} ${getCategory(item) ? '·' : ''} ${escapeHtml(getAddr(item))}</div>
+      </div>
+      <button class="fav-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavoriteFromList('${safeId}', '${cat}', this)">${isFav ? '★' : '☆'}</button>
+    </div>
+  `;
+}
+
+// 목록 항목 클릭 시: 패널 닫고 → 지도 이동 → 해당 항목 정보창 표시
+function openItemFromList(id, cat) {
+  // id로 항목 찾기 (즐겨찾기 → 현재 카테고리 → 다른 카테고리 순서)
+  let foundItem = null;
+  let foundCat = cat;
+  if (STATE.favorites[id]) {
+    foundItem = STATE.favorites[id].item;
+    foundCat = STATE.favorites[id].cat;
+  } else if (STATE.data[cat]) {
+    foundItem = STATE.data[cat].find(it => buildId(cat, it) === id);
+  }
+  if (!foundItem) {
+    // 다른 카테고리에서도 찾아보기
+    for (const c of ['money', 'culture', 'gas']) {
+      const found = (STATE.data[c] || []).find(it => buildId(c, it) === id);
+      if (found) { foundItem = found; foundCat = c; break; }
+    }
+  }
+  if (!foundItem) return;
+
+  const ll = getLatLng(foundItem);
+  if (!ll.lat || !ll.lng) return;
+
+  closePanel();
+  const latlng = new naver.maps.LatLng(ll.lat, ll.lng);
+  STATE.map.setCenter(latlng);
+  if (STATE.map.getZoom() < 16) STATE.map.setZoom(16);
+  openInfoWindow(latlng, foundCat, foundItem);
+}
+
+function toggleFavoriteFromList(id, cat, btn) {
+  if (STATE.favorites[id]) {
+    delete STATE.favorites[id];
+    btn.classList.remove('active');
+    btn.textContent = '☆';
+    showToast('즐겨찾기 해제');
+  } else {
+    // 데이터에서 항목 찾기
+    let foundItem = null;
+    for (const c of ['money', 'culture', 'gas']) {
+      const found = STATE.data[c].find(it => buildId(c, it) === id);
+      if (found) { foundItem = found; break; }
+    }
+    if (foundItem) {
+      STATE.favorites[id] = { cat, item: foundItem, addedAt: Date.now() };
+      btn.classList.add('active');
+      btn.textContent = '★';
+      showToast('즐겨찾기 추가 ⭐');
+    }
+  }
+  localStorage.setItem('favorites', JSON.stringify(STATE.favorites));
+  renderFavorites();
+}
+
+function closePanel() { document.getElementById('sidePanel').classList.remove('open'); }
+
+// ============================================================
+// UI 헬퍼
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function showLoading(show) {
+  document.getElementById('loadingIndicator').classList.toggle('show', show);
+}
+
+// ============================================================
+// 시작
+// ============================================================
+checkSetup();
+</script>
+</body>
+</html>
+  
