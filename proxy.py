@@ -77,12 +77,17 @@ class ProxyHandler(BaseHTTPRequestHandler):
         try:
             parsed = urlparse(self.path)
             # 헬스체크 (Render 등에서 / 로 핑 보낼 때 대응)
+            # Render 헬스체커는 헤더만 확인하고 바디 읽기 전에 연결을 닫는 경우가 있어
+            # BrokenPipe/ConnectionReset 예외는 정상으로 간주하고 조용히 무시
             if parsed.path in ('/', '/health', '/healthz'):
-                self.send_response(200)
-                self._send_cors_headers()
-                self.send_header('Content-Type', 'text/plain; charset=utf-8')
-                self.end_headers()
-                self.wfile.write(b'OK - mjmap proxy is running. Use /proxy?url=<target>')
+                try:
+                    self.send_response(200)
+                    self._send_cors_headers()
+                    self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(b'OK - mjmap proxy is running. Use /proxy?url=<target>')
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
                 return
 
             if not parsed.path.startswith('/proxy'):
@@ -122,31 +127,68 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     print(f"[proxy] 🔑 Opinet 요청 — Referer/UA 보강 적용")
                 req = Request(safe_target, headers=headers)
                 opener = build_opener(DebugRedirectHandler())
-                with opener.open(req, timeout=30) as resp:
-                    body = resp.read()
+                # timeout: 30 → 60 (경기도 API 가 큰 pSize 요청에 느릴 때 대비)
+                with opener.open(req, timeout=60) as resp:
                     content_type = resp.headers.get('Content-Type', 'application/json; charset=utf-8')
                     final_url = resp.url
                     if final_url != safe_target:
                         print(f"[proxy] ✅ 최종 URL: {final_url}")
-                    print(f"[proxy] ← {resp.status} {content_type} / {len(body)} bytes / preview: {body[:200]!r}")
-                self.send_response(200)
-                self.send_header('Content-Type', content_type)
-                self._send_cors_headers()
-                self.end_headers()
-                self.wfile.write(body)
+                    print(f"[proxy] ← {resp.status} {content_type} (스트리밍 시작)")
+
+                    # 헤더부터 즉시 클라이언트에 전달 (응답 첫 바이트가 빨라짐)
+                    self.send_response(200)
+                    self.send_header('Content-Type', content_type)
+                    self._send_cors_headers()
+                    self.end_headers()
+
+                    # 8KB chunk 단위로 upstream 에서 읽으면서 바로 클라이언트에 write
+                    # 이점: (1) 메모리 사용량 최소화, (2) upstream 이 천천히 보내도 timeout 회피,
+                    #       (3) 디버깅용 preview 는 첫 chunk 만 출력
+                    total = 0
+                    first_preview = None
+                    chunk_size = 8192
+                    while True:
+                        try:
+                            chunk = resp.read(chunk_size)
+                        except TimeoutError as te:
+                            # 스트리밍 도중 timeout — 이미 전송한 데이터는 살리고 로그만 남김
+                            print(f"[proxy] ⏱️  upstream read timeout (전송 {total} bytes 까지): {te}")
+                            return
+                        if not chunk:
+                            break
+                        if first_preview is None:
+                            first_preview = chunk[:200]
+                        try:
+                            self.wfile.write(chunk)
+                            total += len(chunk)
+                        except (BrokenPipeError, ConnectionResetError) as cce:
+                            # 클라이언트가 연결을 끊었음 — 정상 케이스, 조용히 종료
+                            print(f"[proxy] ⚠️  클라이언트 연결 끊김 (전송 {total} bytes): {cce}")
+                            return
+                    print(f"[proxy] ← 전송 완료 {total} bytes / preview: {first_preview!r}")
             except HTTPError as e:
+                # upstream 이 4xx/5xx 응답 — 본문(에러 페이지)을 클라이언트에 전달
                 err_body = b''
                 try:
                     err_body = e.read() if hasattr(e, 'read') else b''
                 except Exception:
                     pass
+                detail = f'HTTP {e.code} {e.reason}'
+                preview = err_body[:200] if err_body else b'(empty)'
+                print(f"[proxy] ❌ HTTPError {detail} / preview: {preview!r}")
                 self.send_response(e.code)
                 self._send_cors_headers()
                 self.send_header('Content-Type', e.headers.get('Content-Type', 'text/plain'))
                 self.end_headers()
-                self.wfile.write(err_body if err_body else str(e).encode('utf-8', errors='replace'))
+                try:
+                    self.wfile.write(err_body if err_body else f'Upstream {detail}'.encode('utf-8', errors='replace'))
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
             except URLError as e:
-                self._write_err(502, f'Upstream error: {e}')
+                # 네트워크/TLS/timeout 등 (Opinet IP 차단 케이스도 여기로)
+                reason = getattr(e, 'reason', e)
+                print(f"[proxy] ❌ URLError: {reason!r}")
+                self._write_err(502, f'Upstream URLError: {reason}')
         except Exception as e:
             print(f"[proxy] 예외 발생: {e}")
             traceback.print_exc()
