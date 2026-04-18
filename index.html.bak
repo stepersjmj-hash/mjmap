@@ -4,81 +4,50 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>나만의 경기도 지도 - 지역화폐·주유소</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B76E4A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='24' height='24' rx='5' fill='%23F6F1E7' stroke='none'/%3E%3Cpath d='M9 5 4 7v12l5-2 6 2 5-2V5l-5 2-6-2z'/%3E%3Cpath d='M9 5v14M15 7v14'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%BA%EF%B8%8F%3C/text%3E%3C/svg%3E" />
 <style>
   :root {
-    /* Warm Stone × Sand Ivory palette */
-    --bg: #F6F1E7;
-    --panel: #FFFDF8;
-    --panel-2: #F2EADA;
-    --line: #E3DBCB;
-    --ink: #1A1713;
-    --ink-soft: #2A231B;
-    --muted: #8B8275;
-    --accent: #B76E4A;       /* terracotta */
-    --money: #7E8C5C;        /* olive */
-    --gas: #B76E4A;          /* terracotta */
-    --favorite: #9B6A7C;     /* dusty rose */
-    --shadow: 0 8px 24px -10px rgba(26,23,19,0.18);
-    --shadow-sm: 0 2px 8px -2px rgba(26,23,19,0.12);
-    /* legacy aliases (kept for JS-generated inline styles & unchanged rules) */
-    --primary: #1A1713;
-    --primary-dark: #2A231B;
-    --text: #1A1713;
-    --text-muted: #8B8275;
-    --border: #E3DBCB;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --money: #10b981;
+    --gas: #ef4444;
+    --favorite: #ec4899;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', 'Noto Sans KR', sans-serif; color: var(--text); background: var(--bg); -webkit-tap-highlight-color: transparent; }
   body { display: flex; flex-direction: column; overflow: hidden; }
 
   header {
-    background: var(--panel);
-    color: var(--ink);
-    padding: 12px 18px;
+    background: var(--primary);
+    color: white;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow);
     z-index: 100;
   }
-  header .brand { display: flex; align-items: center; gap: 10px; }
-  header .brand .mark {
-    width: 30px; height: 30px; border-radius: 10px;
-    background: var(--ink); color: var(--panel);
-    display: flex; align-items: center; justify-content: center;
-  }
-  header h1 {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-  }
-  header .brand .sub {
-    font-size: 10px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 1px;
-  }
-  header .actions { display: flex; gap: 6px; }
+  header h1 { font-size: 17px; font-weight: 700; }
+  header .actions { display: flex; gap: 8px; }
   header button {
-    width: 36px;
-    height: 36px;
-    background: var(--panel);
-    color: var(--ink);
-    border: 1px solid var(--line);
-    padding: 0;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: background 0.15s, border-color 0.15s;
+    gap: 4px;
   }
-  header button:hover { background: var(--bg); border-color: var(--ink); }
-  header button svg { display: block; }
+  header button:hover { background: rgba(255,255,255,0.3); }
 
   #mapWrap { flex: 1; position: relative; min-height: 0; }
   #map { width: 100%; height: 100%; }
@@ -88,11 +57,10 @@
     top: 12px;
     left: 12px;
     right: 12px;
-    background: var(--panel);
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    box-shadow: var(--shadow-sm);
-    padding: 8px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 10px;
     z-index: 50;
     display: flex;
     flex-wrap: wrap;
@@ -100,32 +68,22 @@
     align-items: center;
   }
   .chip {
-    padding: 9px 14px;
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 20px;
+    border: 2px solid var(--border);
+    background: white;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.01em;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 5px;
     transition: all 0.15s;
-    color: var(--muted);
+    color: var(--text-muted);
   }
-  .chip svg { display: block; }
-  .chip .tint {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--line);
-    flex-shrink: 0;
-  }
-  .chip[data-cat="money"] .tint { background: var(--money); }
-  .chip[data-cat="gas"]   .tint { background: var(--gas); }
-  .chip[data-cat="fav"]   .tint { background: var(--favorite); }
-  .chip:hover { color: var(--ink); border-color: var(--ink); }
-  .chip.active { background: var(--ink); color: var(--panel); border-color: var(--ink); }
-  .chip.active .tint { background: var(--panel); }
+  .chip.active[data-cat="money"] { background: var(--money); border-color: var(--money); color: white; }
+  .chip.active[data-cat="gas"] { background: var(--gas); border-color: var(--gas); color: white; }
+  .chip.active[data-cat="fav"] { background: var(--favorite); border-color: var(--favorite); color: white; }
 
   .control-stack {
     position: absolute;
@@ -137,21 +95,19 @@
     z-index: 50;
   }
   .ctrl-btn {
-    width: 44px;
-    height: 44px;
-    background: var(--panel);
-    border: 1px solid var(--line);
+    width: 48px;
+    height: 48px;
+    background: white;
+    border: none;
     border-radius: 12px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow);
     cursor: pointer;
-    color: var(--ink);
+    font-size: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
   }
-  .ctrl-btn:hover { background: var(--bg); border-color: var(--ink); }
-  .ctrl-btn svg { display: block; }
+  .ctrl-btn:hover { background: #f1f5f9; }
 
   /* Side Panel for list / favorites / settings */
   .panel {
@@ -161,97 +117,73 @@
     width: 380px;
     max-width: 90%;
     height: 100%;
-    background: var(--panel);
-    box-shadow: -18px 0 40px -16px rgba(26,23,19,0.2);
+    background: white;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
     z-index: 200;
     transform: translateX(100%);
     transition: transform 0.3s;
     display: flex;
     flex-direction: column;
-    border-left: 1px solid var(--line);
   }
   .panel.open { transform: translateX(0); }
   .panel-header {
-    padding: 18px 20px;
-    background: var(--panel);
-    color: var(--ink);
-    border-bottom: 1px solid var(--line);
+    padding: 16px;
+    background: var(--primary);
+    color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .panel-header h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .panel-header h2 { font-size: 16px; }
   .panel-header button {
-    width: 32px;
-    height: 32px;
     background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    color: var(--ink);
+    border: none;
+    color: white;
+    font-size: 22px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
   }
-  .panel-header button:hover { background: var(--bg); border-color: var(--ink); }
   .panel-body { flex: 1; overflow-y: auto; padding: 12px; }
 
   .list-item {
-    padding: 14px 12px;
-    border-bottom: 1px solid var(--line);
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 8px;
-    transition: background 0.15s;
   }
-  .list-item:hover { background: var(--bg); }
+  .list-item:hover { background: #f8fafc; }
   .list-item .info { flex: 1; min-width: 0; }
-  .list-item .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.005em; }
-  .list-item .meta { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .list-item .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .list-item .meta { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
   .list-item .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 8px;
-    border-radius: 999px;
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-size: 10px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--panel);
+    color: white;
     font-weight: 600;
-    margin-right: 2px;
-    white-space: nowrap;
+    margin-right: 4px;
   }
   .badge.money { background: var(--money); }
-  .badge.gas   { background: var(--gas); }
+  .badge.gas { background: var(--gas); }
 
   .fav-btn {
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
+    background: none;
+    border: none;
+    font-size: 22px;
     cursor: pointer;
-    padding: 0;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.15s;
+    padding: 4px;
+    color: #d1d5db;
   }
-  .fav-btn:hover { border-color: var(--ink); color: var(--ink); }
-  .fav-btn.active { color: var(--favorite); border-color: var(--favorite); background: var(--panel); }
-  .fav-btn.active svg { fill: currentColor; }
+  .fav-btn.active { color: var(--favorite); }
 
   /* Modal */
   .modal-bg {
     position: fixed;
     inset: 0;
-    background: rgba(26,23,19,0.4);
-    backdrop-filter: blur(2px);
+    background: rgba(0,0,0,0.5);
     display: none;
     align-items: center;
     justify-content: center;
@@ -260,51 +192,36 @@
   }
   .modal-bg.open { display: flex; }
   .modal {
-    background: var(--panel);
-    border-radius: 20px;
-    border: 1px solid var(--line);
-    padding: 28px;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
     max-width: 480px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 30px 60px -20px rgba(26,23,19,0.3);
   }
-  .modal h2 { margin-bottom: 18px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
-  .modal label { display: block; margin: 14px 0 6px; font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
+  .modal h2 { margin-bottom: 16px; font-size: 18px; }
+  .modal label { display: block; margin: 12px 0 6px; font-size: 13px; font-weight: 600; color: var(--text); }
   .modal input, .modal select, .modal textarea {
     width: 100%;
-    padding: 11px 13px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
-    background: var(--panel);
-    color: var(--ink);
-    transition: border-color 0.15s;
   }
-  .modal input:focus, .modal select:focus, .modal textarea:focus {
-    outline: none;
-    border-color: var(--ink);
-  }
-  .modal .help { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
-  .modal .help a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--line); }
-  .modal .help code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
-  .modal .btn-row { display: flex; gap: 8px; margin-top: 22px; justify-content: flex-end; }
+  .modal .help { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .modal .btn-row { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
   .modal button {
-    padding: 11px 20px;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    letter-spacing: 0.01em;
-    transition: all 0.15s;
   }
-  .btn-primary { background: var(--ink); color: var(--panel); }
-  .btn-primary:hover { background: var(--ink-soft); }
-  .btn-secondary { background: transparent; color: var(--ink); border-color: var(--line); }
-  .btn-secondary:hover { border-color: var(--ink); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-secondary { background: #e5e7eb; color: var(--text); }
 
   /* Toast */
   .toast {
@@ -312,89 +229,63 @@
     bottom: 100px;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: var(--ink);
-    color: var(--panel);
-    padding: 11px 20px;
-    border-radius: 999px;
+    background: rgba(31, 41, 55, 0.95);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 24px;
     font-size: 13px;
-    letter-spacing: 0.01em;
     z-index: 400;
     opacity: 0;
     transition: all 0.3s;
     pointer-events: none;
     white-space: nowrap;
-    box-shadow: 0 10px 25px -10px rgba(26,23,19,0.4);
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* Loading */
   .loading {
     position: absolute;
-    top: 72px;
+    top: 70px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--ink);
-    color: var(--panel);
-    padding: 9px 18px;
-    border-radius: 999px;
-    font-size: 12px;
-    letter-spacing: 0.02em;
+    background: rgba(31,41,55,0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
     z-index: 60;
     display: none;
-    box-shadow: 0 8px 20px -8px rgba(26,23,19,0.35);
   }
   .loading.show { display: block; }
 
   /* Info window content */
   .iw {
-    padding: 14px 16px;
-    min-width: 230px;
-    max-width: 290px;
+    padding: 12px 14px;
+    min-width: 220px;
+    max-width: 280px;
     font-family: inherit;
-    color: var(--ink);
   }
-  .iw .iw-cat {
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 600;
-    margin-bottom: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .iw h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.3; }
-  .iw p { font-size: 12px; color: var(--muted); margin-bottom: 4px; line-height: 1.5; display: flex; align-items: flex-start; gap: 6px; }
-  .iw p svg { flex-shrink: 0; margin-top: 2px; }
-  .iw .iw-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .iw h3 { font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .iw p { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.4; }
+  .iw .iw-actions { display: flex; gap: 6px; margin-top: 10px; }
   .iw .iw-actions button {
     flex: 1;
-    padding: 8px 10px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background: var(--ink);
-    color: var(--panel);
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary);
+    color: white;
     font-size: 12px;
-    font-weight: 600;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    font-family: inherit;
   }
-  .iw .iw-actions .fav-iw { background: transparent; color: var(--ink); border-color: var(--line); }
-  .iw .iw-actions .fav-iw.active { background: var(--favorite); color: var(--panel); border-color: var(--favorite); }
+  .iw .iw-actions .fav-iw { background: #f3f4f6; color: var(--text); }
+  .iw .iw-actions .fav-iw.active { background: var(--favorite); color: white; }
 
   /* Setup screen */
   #setupScreen {
     position: fixed;
     inset: 0;
-    background:
-      radial-gradient(circle at 30% 20%, #EFE6D2 0, transparent 55%),
-      radial-gradient(circle at 70% 80%, #E8DEC4 0, transparent 60%),
-      var(--bg);
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
     z-index: 500;
     display: flex;
     align-items: center;
@@ -402,32 +293,16 @@
     padding: 20px;
   }
   #setupScreen .card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: white;
     border-radius: 20px;
-    padding: 36px;
+    padding: 32px;
     max-width: 480px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 30px 60px -20px rgba(26,23,19,0.2);
   }
-  #setupScreen h1 {
-    font-size: 22px;
-    margin-bottom: 10px;
-    color: var(--ink);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  #setupScreen h1 .mark {
-    width: 34px; height: 34px; border-radius: 10px;
-    background: var(--ink); color: var(--panel);
-    display: flex; align-items: center; justify-content: center;
-  }
-  #setupScreen p.lead { color: var(--muted); font-size: 13px; margin-bottom: 24px; line-height: 1.7; }
+  #setupScreen h1 { font-size: 22px; margin-bottom: 8px; color: var(--primary); }
+  #setupScreen p.lead { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
 
   @media (max-width: 600px) {
     header h1 { font-size: 15px; }
@@ -442,51 +317,32 @@
 <!-- 초기 설정 화면 -->
 <div id="setupScreen">
   <div class="card">
-    <h1>
-      <span class="mark">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>
-      </span>
-      나만의 경기도 지도
-    </h1>
-    <p class="lead">지역화폐 가맹점, 주유소 정보를 한 지도에서 확인하고 즐겨찾기할 수 있어요.<br>시작하기 위해 API 키 두 개를 입력해주세요.</p>
+    <h1>🗺️ 나만의 경기도 지도</h1>
+    <p class="lead">지역화폐 가맹점, 주유소 정보를 한 지도에서 확인하고 즐겨찾기할 수 있어요. 시작하기 위해 API 키 두 개를 입력해주세요.</p>
 
-    <label>네이버 지도 API Client ID <span style="color:var(--accent)">*</span></label>
+    <label>네이버 지도 API Client ID <span style="color:#ef4444">*</span></label>
     <input id="naverKeyInput" type="text" placeholder="예: a1b2c3d4e5" />
     <p class="help">네이버 클라우드 플랫폼(<a href="https://www.ncloud.com" target="_blank">ncloud.com</a>)에서 Maps → Web Dynamic Map 신청 후 발급</p>
 
-    <label>경기도 공공데이터 API 키 <span style="color:var(--accent)">*</span></label>
+    <label>경기도 공공데이터 API 키 <span style="color:#ef4444">*</span></label>
     <input id="ggKeyInput" type="text" placeholder="예: 1234567890abcdef..." />
     <p class="help">경기도 공공데이터포털(<a href="https://data.gg.go.kr" target="_blank">data.gg.go.kr</a>)에서 발급</p>
 
     <div class="btn-row">
       <button class="btn-primary" onclick="saveSetup()">시작하기</button>
     </div>
-    <p class="help" style="margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line);">
-      키는 브라우저 localStorage에만 저장되며, 외부로 전송되지 않습니다.
+    <p class="help" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+      💡 키는 브라우저 localStorage에만 저장되며, 외부로 전송되지 않습니다.
     </p>
   </div>
 </div>
 
 <header>
-  <div class="brand">
-    <span class="mark">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>
-    </span>
-    <div>
-      <h1>나만의 경기도 지도</h1>
-      <div class="sub">Gyeonggi · Local Map</div>
-    </div>
-  </div>
+  <h1>🗺️ 나만의 경기도 지도</h1>
   <div class="actions">
-    <button onclick="openPanel('list')" title="목록" aria-label="목록">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-    </button>
-    <button onclick="openPanel('fav')" title="즐겨찾기" aria-label="즐겨찾기">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    </button>
-    <button onclick="openSettings()" title="설정" aria-label="설정">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
+    <button onclick="openPanel('list')" title="목록">📋</button>
+    <button onclick="openPanel('fav')" title="즐겨찾기">⭐</button>
+    <button onclick="openSettings()" title="설정">⚙️</button>
   </div>
 </header>
 
@@ -494,20 +350,16 @@
   <div id="map"></div>
 
   <div class="filter-bar">
-    <button class="chip" data-cat="money" onclick="toggleCategory('money')"><span class="tint"></span>지역화폐</button>
-    <button class="chip" data-cat="gas" onclick="toggleCategory('gas')"><span class="tint"></span>주유소</button>
-    <button class="chip" data-cat="fav" onclick="toggleCategory('fav')"><span class="tint"></span>즐겨찾기</button>
+    <button class="chip" data-cat="money" onclick="toggleCategory('money')">💳 지역화폐</button>
+    <button class="chip" data-cat="gas" onclick="toggleCategory('gas')">⛽ 주유소</button>
+    <button class="chip" data-cat="fav" onclick="toggleCategory('fav')">⭐ 즐겨찾기</button>
   </div>
 
-  <div class="loading" id="loadingIndicator">데이터를 불러오는 중…</div>
+  <div class="loading" id="loadingIndicator">데이터를 불러오는 중...</div>
 
   <div class="control-stack">
-    <button class="ctrl-btn" onclick="goToMyLocation()" title="내 위치" aria-label="내 위치">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-    </button>
-    <button class="ctrl-btn" onclick="reloadCurrentArea()" title="현재 지도에서 다시 검색" aria-label="현재 지도에서 다시 검색">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-    </button>
+    <button class="ctrl-btn" onclick="goToMyLocation()" title="내 위치">📍</button>
+    <button class="ctrl-btn" onclick="reloadCurrentArea()" title="현재 지도에서 다시 검색">🔄</button>
   </div>
 </div>
 
@@ -515,9 +367,7 @@
 <div class="panel" id="sidePanel">
   <div class="panel-header">
     <h2 id="panelTitle">목록</h2>
-    <button onclick="closePanel()" aria-label="닫기">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+    <button onclick="closePanel()">×</button>
   </div>
   <div class="panel-body" id="panelBody"></div>
 </div>
@@ -525,12 +375,12 @@
 <!-- 설정 모달 -->
 <div class="modal-bg" id="settingsModal">
   <div class="modal">
-    <h2>설정</h2>
+    <h2>⚙️ 설정</h2>
     <label>네이버 지도 API Client ID</label>
     <input id="naverKeyEdit" type="text" />
     <label>경기도 공공데이터 API 키</label>
     <input id="ggKeyEdit" type="text" />
-    <label>Opinet(한국석유공사) 인증키 <span style="font-weight:normal;color:var(--muted);">— 주유소용 (선택)</span></label>
+    <label>Opinet(한국석유공사) 인증키 <span style="font-weight:normal;color:var(--text-muted);">— 주유소용 (선택)</span></label>
     <input id="opinetKeyEdit" type="text" placeholder="예: F1234567890ABCDE" />
     <p class="help">opinet.co.kr에서 발급. 주유소는 Opinet API 사용 (프록시 서버 실행 필요)</p>
     <label>검색 반경 (m)</label>
@@ -550,10 +400,10 @@
 
     <label style="display:flex;align-items:center;gap:8px;">
       <input type="checkbox" id="autoSigunCheck" style="width:auto;" />
-      <span>내 위치로 시군 자동 감지 <span style="font-weight:normal;color:var(--muted);">(위치 버튼 누를 때)</span></span>
+      <span>📍 내 위치로 시군 자동 감지 <span style="font-weight:normal;color:var(--text-muted);">(위치 버튼 누를 때)</span></span>
     </label>
 
-    <label>시군 필터 <span style="font-weight:normal;color:var(--muted);">— 지역화폐</span></label>
+    <label>🏙️ 시군 필터 <span style="font-weight:normal;color:var(--text-muted);">— 지역화폐</span></label>
     <select id="sigunSelect">
       <option value="">전체 (필터 없음)</option>
       <option value="수원시">수원시</option>
@@ -590,10 +440,10 @@
     </select>
     <p class="help">특정 시군을 선택하면 해당 지역 데이터만 가져와서 지도에 표시돼요. 전체 조회 시 수만 건이라 첫 500~1000개만 나옵니다.</p>
 
-    <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line);">
-      <p style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);">경기도 API 서비스명</p>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <p style="font-size:13px;font-weight:600;margin-bottom:8px;">📡 경기도 API 서비스명</p>
       <p class="help" style="margin-bottom:12px;">data.gg.go.kr 마이페이지 → 활용신청내역 → 해당 API → 요청 URL 에서 확인. 예: <code>https://openapi.gg.go.kr/<b>서비스명</b>?KEY=...</code></p>
-      <label>지역화폐 가맹점 서비스명</label>
+      <label>💳 지역화폐 가맹점 서비스명</label>
       <input id="svcMoneyInput" type="text" placeholder="예: RegionMnyFacltStus" />
     </div>
 
@@ -601,11 +451,11 @@
       <button class="btn-secondary" onclick="closeSettings()">취소</button>
       <button class="btn-primary" onclick="saveSettings()">저장</button>
     </div>
-    <p class="help" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);">
-      <strong style="color:var(--ink);">도움이 필요하세요?</strong><br>
-      · 마커가 안 보이면 카테고리 칩을 눌러 활성화하세요.<br>
-      · 데이터가 안 불러와지면 브라우저 콘솔(F12)에서 오류를 확인하세요.<br>
-      · CORS 오류 발생 시 README의 해결 방법을 참조하세요.
+    <p class="help" style="margin-top:16px;">
+      <strong>도움이 필요하세요?</strong><br>
+      • 마커가 안 보이면 카테고리 칩(💳⛽)을 눌러 활성화하세요.<br>
+      • 데이터가 안 불러와지면 브라우저 콘솔(F12)에서 오류를 확인하세요.<br>
+      • CORS 오류 발생 시 README의 해결 방법을 참조하세요.
     </p>
   </div>
 </div>
@@ -864,8 +714,8 @@ function addMyLocationMarker() {
     position: new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng),
     map: STATE.map,
     icon: {
-      content: `<div style="width:16px;height:16px;background:#1A1713;border:3px solid #FFFDF8;border-radius:50%;box-shadow:0 0 0 8px rgba(183,110,74,0.22), 0 2px 6px rgba(26,23,19,0.3);"></div>`,
-      anchor: new naver.maps.Point(11, 11)
+      content: `<div style="width:18px;height:18px;background:#2563eb;border:3px solid white;border-radius:50%;box-shadow:0 0 0 8px rgba(37,99,235,0.25);"></div>`,
+      anchor: new naver.maps.Point(12, 12)
     },
     zIndex: 1000
   });
@@ -1015,7 +865,7 @@ async function loadMoneyData() {
 // ============================================================
 async function loadGasData() {
   if (!STATE.opinetKey) {
-    showToast('설정에서 Opinet 인증키를 먼저 입력하세요.');
+    showToast('⚙️ 설정에서 Opinet 인증키를 먼저 입력하세요.');
     return [];
   }
   if (typeof naver === 'undefined' || !naver.maps.TransCoord) {
@@ -1180,81 +1030,58 @@ function filterByRadius(items, centerLat, centerLng, radiusM) {
 // ============================================================
 // 마커 렌더링
 // ============================================================
-// 공통 라인 아이콘 SVG (1.5px stroke) — 테마와 동일한 얇은 라인 스타일
-const LINE_ICONS = {
-  money: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 9l2 5 2-5 2 5 2-5M7 13h10"/></svg>`,
-  gas:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15"/><path d="M3 20h12"/><path d="M14 8h2a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9l-3-3"/></svg>`,
-  fav:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-  pin:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  phone: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92V21a1 1 0 0 1-1.1 1 19.91 19.91 0 0 1-8.67-3.07 19.5 19.5 0 0 1-6-6A19.91 19.91 0 0 1 3.15 4.1 1 1 0 0 1 4.14 3H8.24a1 1 0 0 1 1 .75l1 4a1 1 0 0 1-.29 1L8.21 10.7a16 16 0 0 0 6 6l1.95-1.74a1 1 0 0 1 1-.29l4 1a1 1 0 0 1 .84 1.25z"/></svg>`,
-  locpin:`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  nav:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
-  heart: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
-};
-
 const ICONS = {
-  money: { color: '#7E8C5C', label: '지역화폐', svg: LINE_ICONS.money },
-  gas:   { color: '#B76E4A', label: '주유소',  svg: LINE_ICONS.gas }
+  money: { color: '#10b981', emoji: '💳', label: '지역화폐' },
+  gas: { color: '#ef4444', emoji: '⛽', label: '주유소' }
 };
 
-// 주유소 최저가 순위(1~5위)별 스타일 — Warm Stone 팔레트와 조화
+// 주유소 최저가 순위(1~5위)별 스타일
 const RANK_STYLES = {
-  1: { color: '#C9A24A', size: 40 },  // 금 (muted gold)
-  2: { color: '#AFA69B', size: 38 },  // 은 (taupe silver)
-  3: { color: '#B07D53', size: 36 },  // 동 (warm bronze)
-  4: { color: '#7E8C5C', size: 34 },  // 올리브 (theme)
-  5: { color: '#B76E4A', size: 32 }   // 테라코타 (theme)
+  1: { color: '#FFD700', size: 40 },  // 금
+  2: { color: '#C0C0C0', size: 38 },  // 은
+  3: { color: '#CD7F32', size: 36 },  // 동
+  4: { color: '#3B82F6', size: 34 },  // 파랑
+  5: { color: '#8B5CF6', size: 32 }   // 보라
 };
 
-// 라운디드 스퀘어 핀 + 인라인 라인 SVG (Warm Stone × Sand Ivory 테마)
-// 주유소(gas)는 가독성을 위해 솔리드 배경 + 아이보리 아이콘으로 반전 렌더링
 function makeMarkerIcon(cat, isFav, rank, item) {
-  const conf = ICONS[cat] || { color: '#8B8275', svg: LINE_ICONS.pin };
-  const IVORY = '#FFFDF8';
-  const FAV_BORDER = '#9B6A7C';
-
-  // 순위가 있으면 (주유소 최저가 1~5위) 가격 태그 + 랭크 숫자 스타일 — 반전 적용
+  const conf = ICONS[cat] || { color: '#6b7280', emoji: '📍' };
+  const ringColor = isFav ? '#ec4899' : 'white';
+  // 순위가 있으면 (주유소 상위 3개) 메달 스타일 적용
   if (rank && RANK_STYLES[rank]) {
     const r = RANK_STYLES[rank];
+    // 모든 순위에 가격 태그 표시 (1~5위)
     const showPrice = item && item.PRICE;
     const priceStr = showPrice ? `${Number(item.PRICE).toLocaleString()}원` : '';
 
     const pinSize = r.size;
-    const containerWidth = showPrice ? 96 : pinSize + 10;
+    const containerWidth = showPrice ? 90 : pinSize + 10;
     const tagHeight = showPrice ? 26 : 0;
-    const tagGap = showPrice ? 6 : 0;
-    const stemHeight = 8;
-    const containerHeight = tagHeight + tagGap + pinSize + stemHeight;
+    const tagGap = showPrice ? 4 : 0;
+    const containerHeight = tagHeight + tagGap + pinSize + 10;
     const pinLeft = (containerWidth - pinSize) / 2;
     const pinTop = tagHeight + tagGap;
 
     const tagHtml = showPrice ? `
-        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:${r.color};border:1px solid ${r.color};border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;color:${IVORY};line-height:18px;box-shadow:0 2px 6px rgba(26,23,19,0.2);white-space:nowrap;letter-spacing:-0.01em;">${priceStr}</div>
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:white;border:2px solid #16a34a;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;color:#16a34a;line-height:18px;box-shadow:0 2px 6px rgba(0,0,0,0.25);white-space:nowrap;">${priceStr}</div>
+        <div style="position:absolute;left:50%;top:${tagHeight - 2}px;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #16a34a;"></div>
       ` : '';
 
     return {
-      content: `<div style="position:relative;width:${containerWidth}px;height:${containerHeight}px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI','Noto Sans KR',sans-serif;">
+      content: `<div style="position:relative;width:${containerWidth}px;height:${containerHeight}px;">
         ${tagHtml}
-        <div style="position:absolute;top:${pinTop}px;left:${pinLeft}px;width:${pinSize}px;height:${pinSize}px;background:${r.color};border:1.5px solid ${r.color};border-radius:12px;display:flex;align-items:center;justify-content:center;color:${IVORY};font-weight:700;font-size:${Math.max(13, pinSize - 20)}px;letter-spacing:-0.02em;box-shadow:0 4px 10px -2px rgba(26,23,19,0.25);">${rank}</div>
-        <div style="position:absolute;top:${pinTop + pinSize}px;left:50%;transform:translateX(-50%);width:1.5px;height:${stemHeight}px;background:${r.color};"></div>
+        <div style="position:absolute;top:${pinTop}px;left:${pinLeft}px;width:${pinSize}px;height:${pinSize}px;background:${r.color};border:3px solid ${ringColor};border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,0.4);"></div>
+        <div style="position:absolute;top:${pinTop}px;left:${pinLeft}px;width:${pinSize}px;height:${pinSize}px;display:flex;align-items:center;justify-content:center;font-size:${pinSize - 14}px;font-weight:900;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.6);">${rank}</div>
       </div>`,
-      anchor: new naver.maps.Point(containerWidth / 2, containerHeight - 2)
+      anchor: new naver.maps.Point(containerWidth / 2, containerHeight - 4)
     };
   }
-
-  // 일반 단일 마커 — gas는 반전(solid bg + ivory icon), 그 외는 기본(ivory bg + 컬러 아이콘)
-  const isGas = cat === 'gas';
-  const bgColor     = isGas ? conf.color : IVORY;
-  const iconColor   = isGas ? IVORY      : conf.color;
-  const borderColor = isFav ? FAV_BORDER : conf.color;
-  const stemColor   = isFav ? FAV_BORDER : conf.color;
-
   return {
-    content: `<div style="position:relative;width:40px;height:52px;font-family:inherit;">
-      <div style="position:absolute;top:0;left:2px;width:36px;height:36px;background:${bgColor};border:1.5px solid ${borderColor};border-radius:12px;display:flex;align-items:center;justify-content:center;color:${iconColor};box-shadow:0 4px 10px -2px rgba(26,23,19,0.2);">${conf.svg}</div>
-      <div style="position:absolute;top:36px;left:50%;transform:translateX(-50%);width:1.5px;height:8px;background:${stemColor};"></div>
+    content: `<div style="position:relative;width:32px;height:42px;">
+      <div style="position:absolute;top:0;left:0;width:32px;height:32px;background:${conf.color};border:3px solid ${ringColor};border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
+      <div style="position:absolute;top:5px;left:6px;font-size:16px;line-height:20px;width:20px;text-align:center;">${conf.emoji}</div>
     </div>`,
-    anchor: new naver.maps.Point(20, 48)
+    anchor: new naver.maps.Point(16, 38)
   };
 }
 
@@ -1301,7 +1128,7 @@ function renderMarkers(cat, items) {
         position: new naver.maps.LatLng(group.lat, group.lng),
         map: STATE.map,
         icon: makeMarkerIcon(cat, isFav, rank, item),
-        title: rank ? `${rank}위 최저가 · ${getName(item)}` : getName(item),
+        title: rank ? `🏆 ${rank}위 최저가 - ${getName(item)}` : getName(item),
         ...(zIndex !== undefined ? { zIndex } : {})
       });
       naver.maps.Event.addListener(marker, 'click', () => openInfoWindow(marker, cat, item));
@@ -1321,17 +1148,17 @@ function renderMarkers(cat, items) {
   });
 }
 
-// 클러스터 마커 아이콘 — 같은 시각 언어 + 우상단 숫자 배지
+// 클러스터 마커 아이콘 (카테고리 색상 + 숫자 배지)
 function makeClusterIcon(cat, count) {
-  const conf = ICONS[cat] || { color: '#8B8275', svg: LINE_ICONS.pin };
+  const conf = ICONS[cat] || { color: '#6b7280', emoji: '📍' };
   const countText = count > 99 ? '99+' : String(count);
   return {
-    content: `<div style="position:relative;width:48px;height:58px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI','Noto Sans KR',sans-serif;">
-      <div style="position:absolute;top:0;left:4px;width:40px;height:40px;background:${conf.color};border:1.5px solid ${conf.color};border-radius:12px;display:flex;align-items:center;justify-content:center;color:#FFFDF8;box-shadow:0 6px 12px -2px rgba(26,23,19,0.25);">${conf.svg.replace('stroke="currentColor"','stroke="#FFFDF8"')}</div>
-      <div style="position:absolute;top:-4px;right:0;min-width:22px;height:22px;padding:0 7px;background:#1A1713;color:#FFFDF8;border:2px solid #FFFDF8;border-radius:11px;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 2px 4px rgba(26,23,19,0.3);letter-spacing:-0.02em;">${countText}</div>
-      <div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);width:1.5px;height:10px;background:${conf.color};"></div>
+    content: `<div style="position:relative;width:44px;height:52px;">
+      <div style="position:absolute;top:0;left:0;width:44px;height:44px;background:${conf.color};border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.35);"></div>
+      <div style="position:absolute;top:8px;left:8px;font-size:18px;line-height:22px;width:28px;text-align:center;">${conf.emoji}</div>
+      <div style="position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 6px;background:#ec4899;color:white;border:2px solid white;border-radius:11px;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.3);">${countText}</div>
     </div>`,
-    anchor: new naver.maps.Point(24, 54)
+    anchor: new naver.maps.Point(22, 48)
   };
 }
 
@@ -1345,7 +1172,7 @@ function openClusterPanel(cat, group) {
   const title = document.getElementById('panelTitle');
   const body = document.getElementById('panelBody');
   panel.classList.add('open');
-  title.textContent = `${ICONS[cat].label} · ${group.items.length}건 (같은 위치)`;
+  title.textContent = `${ICONS[cat].emoji} ${ICONS[cat].label} ${group.items.length}건 (같은 위치)`;
   body.innerHTML = group.items.map(item => renderListItem(cat, item, !!STATE.favorites[buildId(cat, item)])).join('');
 }
 
@@ -1364,26 +1191,21 @@ function openInfoWindow(target, cat, item) {
 
   const content = `
     <div class="iw">
-      <div class="iw-cat" style="color:${conf.color};">
-        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${conf.color};"></span>
-        ${escapeHtml(conf.label)}${category ? ' · ' + escapeHtml(category) : ''}
-      </div>
-      <h3>${escapeHtml(name)}</h3>
-      ${addr ? `<p>${LINE_ICONS.locpin}<span>${escapeHtml(addr)}</span></p>` : ''}
-      ${phone ? `<p>${LINE_ICONS.phone}<span>${escapeHtml(phone)}</span></p>` : ''}
+      <h3>${conf.emoji} ${escapeHtml(name)}</h3>
+      ${category ? `<p><strong>${escapeHtml(category)}</strong></p>` : ''}
+      ${addr ? `<p>📍 ${escapeHtml(addr)}</p>` : ''}
+      ${phone ? `<p>📞 ${escapeHtml(phone)}</p>` : ''}
       <div class="iw-actions">
-        <button class="fav-iw ${isFav?'active':''}" onclick="toggleFavoriteFromIW('${id.replace(/'/g, "\\'")}', '${cat}')">${LINE_ICONS.heart}<span>${isFav ? '해제' : '즐겨찾기'}</span></button>
-        <button onclick="openNaverDirections(${ll.lat}, ${ll.lng}, '${escapeHtml(name).replace(/'/g, "\\'")}')">${LINE_ICONS.nav}<span>길찾기</span></button>
+        <button class="fav-iw ${isFav?'active':''}" onclick="toggleFavoriteFromIW('${id.replace(/'/g, "\\'")}', '${cat}')">${isFav ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기'}</button>
+        <button onclick="openNaverDirections(${ll.lat}, ${ll.lng}, '${escapeHtml(name).replace(/'/g, "\\'")}')">🚗 길찾기</button>
       </div>
     </div>
   `;
 
   const infoWindow = new naver.maps.InfoWindow({
     content: content,
-    borderColor: '#E3DBCB',
-    borderWidth: 1,
-    backgroundColor: '#FFFDF8',
-    anchorColor: '#FFFDF8',
+    borderColor: conf.color,
+    borderWidth: 2,
     pixelOffset: new naver.maps.Point(0, -8)
   });
   infoWindow.open(STATE.map, target);
@@ -1438,22 +1260,17 @@ function renderFavorites() {
   Object.values(STATE.favorites).forEach(fav => {
     const ll = getLatLng(fav.item);
     if (!ll.lat || !ll.lng) return;
-    const conf = ICONS[fav.cat] || { color: '#9B6A7C', svg: LINE_ICONS.pin };
-    const isGasFav = fav.cat === 'gas';
-    const favBg   = isGasFav ? conf.color : '#FFFDF8';
-    const favIcon = isGasFav ? '#FFFDF8'  : conf.color;
+    const conf = ICONS[fav.cat] || { color: '#ec4899', emoji: '⭐' };
     const marker = new naver.maps.Marker({
       position: new naver.maps.LatLng(ll.lat, ll.lng),
       map: STATE.map,
       icon: {
-        content: `<div style="position:relative;width:40px;height:54px;font-family:inherit;">
-          <div style="position:absolute;top:0;left:2px;width:36px;height:36px;background:${favBg};border:1.5px solid #9B6A7C;border-radius:12px;display:flex;align-items:center;justify-content:center;color:${favIcon};box-shadow:0 4px 12px -2px rgba(155,106,124,0.35);">${conf.svg}</div>
-          <div style="position:absolute;top:-5px;right:-2px;width:18px;height:18px;background:#9B6A7C;color:#FFFDF8;border:2px solid #FFFDF8;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(26,23,19,0.25);">
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <div style="position:absolute;top:36px;left:50%;transform:translateX(-50%);width:1.5px;height:8px;background:#9B6A7C;"></div>
+        content: `<div style="position:relative;width:34px;height:44px;">
+          <div style="position:absolute;top:0;left:0;width:34px;height:34px;background:${conf.color};border:3px solid #ec4899;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(236,72,153,0.5);"></div>
+          <div style="position:absolute;top:5px;left:7px;font-size:16px;line-height:20px;width:20px;text-align:center;">${conf.emoji}</div>
+          <div style="position:absolute;top:-4px;right:-4px;background:#ec4899;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;">★</div>
         </div>`,
-        anchor: new naver.maps.Point(20, 48)
+        anchor: new naver.maps.Point(17, 40)
       },
       title: getName(fav.item),
       zIndex: 500
@@ -1552,7 +1369,7 @@ async function loadAndRenderCategory(cat) {
       showToast(`${ICONS[cat].label}: ${items.length}개 받았지만 좌표 필드 없음. F12 확인.`);
       console.warn(`[${cat}] 좌표 필드를 찾을 수 없음. 첫 항목 키:`, Object.keys(items[0] || {}));
     } else if (filtered.length === 0) {
-      showToast(`${ICONS[cat].label}: 반경 내 0개. 설정에서 반경을 "제한 없음"으로 변경해보세요.`);
+      showToast(`${ICONS[cat].label}: 반경 내 0개. ⚙️설정에서 반경을 "제한 없음"으로 변경해보세요.`);
     } else {
       showToast(`${ICONS[cat].label} ${filtered.length}개 표시 (전체 ${items.length}개 중)`);
     }
@@ -1584,26 +1401,26 @@ function openPanel(mode) {
   panel.classList.add('open');
 
   if (mode === 'fav') {
-    title.textContent = '즐겨찾기';
+    title.textContent = '⭐ 즐겨찾기';
     const favs = Object.entries(STATE.favorites);
     if (favs.length === 0) {
-      body.innerHTML = '<p style="text-align:center;color:var(--muted);padding:48px 20px;font-size:13px;line-height:1.6;">즐겨찾기한 장소가 없습니다.<br>지도의 마커를 클릭하여 추가해보세요.</p>';
+      body.innerHTML = '<p style="text-align:center;color:#6b7280;padding:40px 20px;">즐겨찾기한 장소가 없습니다.<br>지도의 마커를 클릭하여 추가해보세요.</p>';
       return;
     }
     body.innerHTML = favs.map(([id, fav]) => renderListItem(fav.cat, fav.item, true, id)).join('');
   } else {
-    title.textContent = '현재 표시 중';
+    title.textContent = '📋 현재 표시 중인 장소';
     let html = '';
     let total = 0;
     for (const cat of ['money', 'gas']) {
       if (STATE.active[cat] && STATE.data[cat].length > 0) {
-        html += `<h3 style="padding:12px 12px 8px;font-size:11px;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;display:flex;align-items:center;gap:8px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${ICONS[cat].color};"></span>${ICONS[cat].label} <span style="color:var(--ink);font-weight:600;">${STATE.data[cat].length}</span></h3>`;
+        html += `<h3 style="padding:8px 12px;font-size:13px;color:#6b7280;">${ICONS[cat].emoji} ${ICONS[cat].label} (${STATE.data[cat].length})</h3>`;
         html += STATE.data[cat].slice(0, 50).map(item => renderListItem(cat, item, !!STATE.favorites[buildId(cat, item)])).join('');
         total += STATE.data[cat].length;
       }
     }
     if (total === 0) {
-      html = '<p style="text-align:center;color:var(--muted);padding:48px 20px;font-size:13px;line-height:1.6;">상단의 카테고리 칩을 눌러 데이터를 표시해보세요.</p>';
+      html = '<p style="text-align:center;color:#6b7280;padding:40px 20px;">상단의 카테고리 칩(💳⛽)을 눌러 데이터를 표시해보세요.</p>';
     }
     body.innerHTML = html;
   }
@@ -1619,7 +1436,7 @@ function renderListItem(cat, item, isFav, favId) {
         <div class="title"><span class="badge ${cat}">${conf.label}</span>${escapeHtml(getName(item))}</div>
         <div class="meta">${escapeHtml(getCategory(item))} ${getCategory(item) ? '·' : ''} ${escapeHtml(getAddr(item))}</div>
       </div>
-      <button class="fav-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavoriteFromList('${safeId}', '${cat}', this)" aria-label="즐겨찾기">${LINE_ICONS.heart}</button>
+      <button class="fav-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavoriteFromList('${safeId}', '${cat}', this)">${isFav ? '★' : '☆'}</button>
     </div>
   `;
 }
@@ -1658,7 +1475,7 @@ function toggleFavoriteFromList(id, cat, btn) {
   if (STATE.favorites[id]) {
     delete STATE.favorites[id];
     btn.classList.remove('active');
-    btn.innerHTML = LINE_ICONS.heart;
+    btn.textContent = '☆';
     showToast('즐겨찾기 해제');
   } else {
     // 데이터에서 항목 찾기
@@ -1670,8 +1487,8 @@ function toggleFavoriteFromList(id, cat, btn) {
     if (foundItem) {
       STATE.favorites[id] = { cat, item: foundItem, addedAt: Date.now() };
       btn.classList.add('active');
-      btn.innerHTML = LINE_ICONS.heart;
-      showToast('즐겨찾기 추가');
+      btn.textContent = '★';
+      showToast('즐겨찾기 추가 ⭐');
     }
   }
   localStorage.setItem('favorites', JSON.stringify(STATE.favorites));
