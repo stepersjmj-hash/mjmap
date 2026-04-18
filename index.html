@@ -964,7 +964,7 @@ function detectSigunFromLocation(lat, lng) {
 // 경기도 openapi.gg.go.kr는 표준 형식:
 //   /{서비스명}?KEY=...&Type=json&pIndex=1&pSize=100&[추가파라미터]
 // ============================================================
-const API_BASE = 'http://localhost:8080/proxy?url=https://openapi.gg.go.kr';
+const API_BASE = 'https://mjmap-proxy.onrender.com/proxy?url=https://openapi.gg.go.kr';
 
 async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
   const qs = new URLSearchParams({
@@ -1030,7 +1030,8 @@ async function loadGasData() {
   const radius = Math.min(STATE.radius || 3000, 5000); // Opinet 최대 5km
 
   // 프록시 경유 (API_BASE 와 동일한 프록시 사용). OPINET_BASE도 proxy.py 통해서 호출
-  const proxyPrefix = API_BASE.startsWith('http://localhost') ? API_BASE.split('/proxy')[0] + '/proxy?url=' : '';
+  // host 무관하게 "/proxy?url=" 패턴이 있으면 그 prefix 를 추출 (localhost / Render / 기타 호스팅 모두 지원)
+  const proxyPrefix = API_BASE.includes('/proxy?url=') ? API_BASE.split('/proxy?url=')[0] + '/proxy?url=' : '';
   const opinetBase = 'https://www.opinet.co.kr/api/aroundAll.do';
   const targetUrl = proxyPrefix ? `${proxyPrefix}${encodeURIComponent(opinetBase)}` : opinetBase;
 
@@ -1700,4 +1701,3 @@ checkSetup();
 </script>
 </body>
 </html>
-  
