@@ -1,0 +1,22 @@
+# Render Blueprint — mjmap CORS proxy
+# 참고: https://render.com/docs/blueprint-spec
+#
+# 사용법:
+#   1) 이 파일을 레포 루트에 커밋해서 GitHub 에 push
+#   2) Render 대시보드 → 기존 Project → "+ New" → "Blueprint" → 레포 선택
+#   3) 자동으로 아래 설정대로 Web Service 생성됨
+#
+# (Blueprint 대신 "Web Service" 를 수동으로 만들어도 동일하게 동작합니다.
+#  그 경우 Start Command 에 "python proxy.py" 만 넣으면 됩니다.)
+
+services:
+  - type: web
+    name: mjmap-proxy
+    runtime: python
+    plan: free
+    buildCommand: ""          # 외부 패키지 없음 — 표준 라이브러리만 사용
+    startCommand: python proxy.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

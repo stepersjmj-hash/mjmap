@@ -1,18 +1,21 @@
 """
 간단한 CORS 프록시 서버
 ================================
-경기도 공공데이터 API가 CORS 차단될 경우 이 스크립트를 실행하세요.
+경기도 공공데이터 API / Opinet API 가 CORS 차단될 경우 이 스크립트를 실행하세요.
 
-사용법:
+로컬 실행:
   python proxy.py
+  → http://localhost:8080 에서 프록시 실행
 
-그러면 http://localhost:8080 에서 프록시가 실행됩니다.
-index.html 의 API_BASE 상수를 아래와 같이 수정하세요:
-  const API_BASE = 'http://localhost:8080/proxy?url=https://openapi.gg.go.kr';
+Render 등 클라우드 배포:
+  - 환경변수 PORT 가 자동으로 주입됨
+  - index.html 의 API_BASE 를 배포된 URL 로 교체
+    예) const API_BASE = 'https://mjmap-proxy.onrender.com/proxy?url=https://openapi.gg.go.kr';
 
 (추가 경로와 쿼리는 자동으로 append됩니다)
 """
 
+import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs, unquote, quote, urlsplit, urlunsplit
 from urllib.request import urlopen, Request, HTTPRedirectHandler, build_opener
@@ -73,6 +76,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             parsed = urlparse(self.path)
+            # 헬스체크 (Render 등에서 / 로 핑 보낼 때 대응)
+            if parsed.path in ('/', '/health', '/healthz'):
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(b'OK - mjmap proxy is running. Use /proxy?url=<target>')
+                return
+
             if not parsed.path.startswith('/proxy'):
                 self._write_err(404, 'Use /proxy?url=<target>')
                 return
@@ -144,15 +156,19 @@ class ProxyHandler(BaseHTTPRequestHandler):
         print(f"[proxy] {self.address_string()} - {fmt % args}")
 
 
-def main(port=8080):
+def main():
+    # Render / Heroku 등 PaaS 는 PORT 환경변수로 포트를 지정함. 없으면 로컬용 8080.
+    port = int(os.environ.get('PORT', 8080))
     server = HTTPServer(('0.0.0.0', port), ProxyHandler)
-    print(f"🚀 CORS 프록시 서버가 http://localhost:{port} 에서 실행 중입니다.")
-    print(f"   사용 예: http://localhost:{port}/proxy?url=https://openapi.gg.go.kr/RegionMnyFacltStus&KEY=...&Type=json")
-    print("   Ctrl+C로 종료")
+    print(f"🚀 CORS 프록시 서버가 포트 {port} 에서 실행 중입니다. (0.0.0.0:{port})")
+    print(f"   헬스체크:  /  또는  /health")
+    print(f"   사용 예:   /proxy?url=https://openapi.gg.go.kr/RegionMnyFacltStus&KEY=...&Type=json")
+    print("   Ctrl+C 로 종료")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n서버 종료")
+        print("\n[proxy] 종료합니다.")
+        server.server_close()
 
 
 if __name__ == '__main__':
