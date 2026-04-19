@@ -1,0 +1,44 @@
+# mjmap CORS 프록시 — Synology DSM Container Manager 용
+#
+# 사용법 (NAS SSH 접속 후):
+#   cd /volume1/docker/mjmap-proxy
+#   sudo docker compose up -d
+#
+# 또는 Container Manager GUI:
+#   "프로젝트" 탭 → "생성" → 경로 지정 → 이 파일 선택 → 빌드 & 시작
+#
+# 로그 확인:
+#   sudo docker logs -f mjmap-proxy
+
+services:
+  proxy:
+    build: .
+    image: mjmap-proxy:latest
+    container_name: mjmap-proxy
+    restart: unless-stopped
+
+    # ─── host 네트워크 모드 ─────────────────────────────────────────
+    # NAS 의 네트워크를 직접 사용 → Docker DNS 이슈 원천 회피
+    # (Synology Container Manager 가 `dns:` 지시어를 무시하는 케이스 대응)
+    # 부작용: ports 블록 무시, 컨테이너가 NAS 호스트 8080 포트를 직접 점유
+    network_mode: host
+
+    environment:
+      # 허용할 브라우저 Origin (콤마 구분)
+      # GitHub Pages 주소가 바뀌면 여기서 수정
+      ALLOWED_ORIGINS: "https://stepersjmj-hash.github.io,https://stepersjmj.synology.me,http://localhost,http://127.0.0.1"
+
+      # 프록시가 중계를 허용하는 upstream 호스트 (콤마 구분, endswith 매칭)
+      ALLOWED_UPSTREAM_HOSTS: "openapi.gg.go.kr,opinet.co.kr,dapi.kakao.com"
+
+      # 컨테이너 내부 리스닝 포트 (host 모드이므로 NAS 의 해당 포트를 직접 점유함)
+      # 8080 이 다른 서비스와 충돌하면 여기를 18080 등으로 바꾸고,
+      # DSM 역방향 프록시 대상 포트도 같이 수정하세요.
+      PORT: "8080"
+
+    # 로그 로테이션 (NAS 디스크 보호 — 무한히 쌓이는 것 방지)
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

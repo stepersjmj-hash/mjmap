@@ -1,5 +1,5 @@
 """
-간단한 CORS 프록시 서버
+간단한 CORS 프록시 서버 (보안 강화판)
 ================================
 경기도 공공데이터 API / Opinet API 가 CORS 차단될 경우 이 스크립트를 실행하세요.
 
@@ -7,12 +7,15 @@
   python proxy.py
   → http://localhost:8080 에서 프록시 실행
 
-Render 등 클라우드 배포:
-  - 환경변수 PORT 가 자동으로 주입됨
-  - index.html 의 API_BASE 를 배포된 URL 로 교체
-    예) const API_BASE = 'https://mjmap-proxy.onrender.com/proxy?url=https://openapi.gg.go.kr';
+Synology NAS / Docker / Render 배포:
+  - 환경변수 PORT            : 리스닝 포트 (default 8080)
+  - 환경변수 ALLOWED_ORIGINS : CORS 허용 Origin (콤마 구분)
+      default: https://stepersjmj-hash.github.io,http://localhost,http://127.0.0.1
+  - 환경변수 ALLOWED_UPSTREAM_HOSTS : 프록시가 중계 허용하는 upstream 호스트 (콤마 구분, 부분일치)
+      default: openapi.gg.go.kr,opinet.co.kr,dapi.kakao.com
 
-(추가 경로와 쿼리는 자동으로 append됩니다)
+  index.html 의 API_BASE 예시:
+    const API_BASE = 'https://stepersjmj.synology.me/mjmap-proxy/proxy?url=https://openapi.gg.go.kr';
 """
 
 import os
@@ -21,6 +24,53 @@ from urllib.parse import urlparse, parse_qs, unquote, quote, urlsplit, urlunspli
 from urllib.request import urlopen, Request, HTTPRedirectHandler, build_opener
 from urllib.error import HTTPError, URLError
 import traceback
+
+
+# ─── 보안 설정 (환경변수) ───────────────────────────────────────────────
+# Origin 허용 목록 (브라우저가 보내는 Origin 헤더와 일치 여부 확인)
+_DEFAULT_ORIGINS = "https://stepersjmj-hash.github.io,http://localhost,http://127.0.0.1"
+ALLOWED_ORIGINS = [
+    o.strip().rstrip('/')
+    for o in os.environ.get('ALLOWED_ORIGINS', _DEFAULT_ORIGINS).split(',')
+    if o.strip()
+]
+
+# Upstream 호스트 허용 목록 (target URL 의 hostname 이 이 중 하나를 포함해야 함)
+_DEFAULT_UPSTREAM = "openapi.gg.go.kr,opinet.co.kr,dapi.kakao.com"
+ALLOWED_UPSTREAM_HOSTS = [
+    h.strip().lower()
+    for h in os.environ.get('ALLOWED_UPSTREAM_HOSTS', _DEFAULT_UPSTREAM).split(',')
+    if h.strip()
+]
+
+print(f"[proxy] 🔐 ALLOWED_ORIGINS = {ALLOWED_ORIGINS}")
+print(f"[proxy] 🔐 ALLOWED_UPSTREAM_HOSTS = {ALLOWED_UPSTREAM_HOSTS}")
+
+
+def _origin_allowed(origin: str) -> bool:
+    """Origin 헤더가 허용 목록에 있는지 확인. Origin 이 없으면 True(직접 호출 허용)."""
+    if not origin:
+        return True
+    origin = origin.rstrip('/')
+    return origin in ALLOWED_ORIGINS
+
+
+def _upstream_allowed(target_url: str) -> bool:
+    """target URL 의 hostname 이 허용 목록 중 하나와 정확히 같거나, 그 서브도메인이면 허용.
+
+    예) 'opinet.co.kr' 허용 시 → 'www.opinet.co.kr' OK, 'opinet.co.kr.evil.com' NG.
+    """
+    try:
+        host = (urlparse(target_url).hostname or '').lower()
+    except Exception:
+        return False
+    if not host:
+        return False
+    for allowed in ALLOWED_UPSTREAM_HOSTS:
+        allowed = allowed.lower()
+        if host == allowed or host.endswith('.' + allowed):
+            return True
+    return False
 
 
 class DebugRedirectHandler(HTTPRedirectHandler):
@@ -54,9 +104,16 @@ def _safe_url(raw_url):
 
 class ProxyHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
-        self.send_header('Access-Control-Allow-Origin', '*')
+        # 요청 Origin 이 허용 목록에 있으면 그 값을 그대로 반환, 아니면 기본값
+        origin = self.headers.get('Origin', '')
+        if origin and _origin_allowed(origin):
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+        else:
+            # Origin 헤더가 없는 경우 (curl / 서버간 호출) → 첫 번째 허용 Origin 을 반환
+            self.send_header('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0] if ALLOWED_ORIGINS else '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', '*')
+        self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
 
     def _write_err(self, code, msg):
         try:
@@ -69,6 +126,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
             pass
 
     def do_OPTIONS(self):
+        # preflight 도 Origin 검증
+        origin = self.headers.get('Origin', '')
+        if origin and not _origin_allowed(origin):
+            self._write_err(403, f'Origin not allowed: {origin}')
+            return
         self.send_response(200)
         self._send_cors_headers()
         self.end_headers()
@@ -76,8 +138,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             parsed = urlparse(self.path)
-            # 헬스체크 (Render 등에서 / 로 핑 보낼 때 대응)
-            # Render 헬스체커는 헤더만 확인하고 바디 읽기 전에 연결을 닫는 경우가 있어
+            # 헬스체크 (Render/Synology/Docker 등에서 / 로 핑 보낼 때 대응)
+            # 헬스체커는 헤더만 확인하고 바디 읽기 전에 연결을 닫는 경우가 있어
             # BrokenPipe/ConnectionReset 예외는 정상으로 간주하고 조용히 무시
             if parsed.path in ('/', '/health', '/healthz'):
                 try:
@@ -94,12 +156,27 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self._write_err(404, 'Use /proxy?url=<target>')
                 return
 
+            # ─── Origin 검증 ────────────────────────────────────────
+            origin = self.headers.get('Origin', '')
+            if origin and not _origin_allowed(origin):
+                print(f"[proxy] 🚫 403 Origin not allowed: {origin}")
+                self._write_err(403, f'Origin not allowed: {origin}')
+                return
+
             qs = parse_qs(parsed.query, keep_blank_values=True)
             if 'url' not in qs:
                 self._write_err(400, 'Missing url parameter')
                 return
 
             target = qs['url'][0]  # parse_qs는 이미 unquote 처리함
+
+            # ─── Upstream 호스트 화이트리스트 검증 ──────────────────
+            if not _upstream_allowed(target):
+                host = urlparse(target).hostname or '(invalid)'
+                print(f"[proxy] 🚫 403 Upstream host not allowed: {host}")
+                self._write_err(403, f'Upstream host not allowed: {host}')
+                return
+
             extra_params = {k: v for k, v in qs.items() if k != 'url'}
             if extra_params:
                 # 값을 URL 인코딩 (한글 등 non-ASCII 안전 처리)

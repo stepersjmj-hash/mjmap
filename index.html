@@ -436,6 +436,8 @@
     .panel { width: 85%; max-width: 85%; }
   }
 </style>
+<!-- proj4js — Opinet KATEC 좌표계 ↔ WGS84 변환용 (주유소 API 호출에 필요) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
 </head>
 <body>
 
@@ -530,9 +532,20 @@
     <input id="naverKeyEdit" type="text" />
     <label>경기도 공공데이터 API 키</label>
     <input id="ggKeyEdit" type="text" />
-    <label>카카오 REST API 키 <span style="font-weight:normal;color:var(--muted);">— 주유소용 (선택)</span></label>
-    <input id="kakaoKeyEdit" type="text" placeholder="예: 8cb46d15... (카카오 디벨로퍼스 REST 키)" />
-    <p class="help">developers.kakao.com 에서 발급. 주유소 위치 조회에 사용 (가격 정보는 제공되지 않음). 내 애플리케이션 → 플랫폼 → Web 에 배포 도메인 등록 필요.</p>
+    <label>Opinet API 키 <span style="font-weight:normal;color:var(--muted);">— 주유소 가격 조회</span></label>
+    <input id="opinetKeyEdit" type="text" placeholder="예: F2604... (opinet.co.kr 개발자센터 발급)" />
+    <p class="help">opinet.co.kr 개발자센터에서 발급. 주변 주유소 위치 + 실시간 가격 정보 제공 (한국 IP 필요 — NAS 프록시 경유).</p>
+    <label>유종 선택 <span style="font-weight:normal;color:var(--muted);">— 주유소 가격</span></label>
+    <select id="prodcdSelect">
+      <option value="B027">휘발유 (보통)</option>
+      <option value="D047">자동차용 경유</option>
+      <option value="B034">고급휘발유</option>
+      <option value="K015">자동차용 부탄 (LPG)</option>
+      <option value="C004">실내등유</option>
+    </select>
+    <label>카카오 REST API 키 <span style="font-weight:normal;color:var(--muted);">— 보조 (선택)</span></label>
+    <input id="kakaoKeyEdit" type="text" placeholder="선택 입력 (현재 기본 주유소 소스는 Opinet)" />
+    <p class="help">developers.kakao.com 에서 발급. Opinet 키가 없거나 가격 조회 불필요 시 카카오로 폴백. 현재 기본 주유소 소스는 Opinet 입니다.</p>
     <label>검색 반경 (m)</label>
     <select id="radiusSelect">
       <option value="500">500m</option>
@@ -634,7 +647,12 @@ const _CFG = {
 const STATE = {
   naverKey: localStorage.getItem('naverKey') || _CFG.k1 || '',
   ggKey: localStorage.getItem('ggKey') || _CFG.k2 || '',
-  kakaoKey: localStorage.getItem('kakaoKey') || _CFG.k3 || '',
+  // Opinet 키 — _CFG.k3 은 원래 Opinet 용으로 인코딩돼 있었음 (Kakao 로 오전환됐던 것 복구)
+  opinetKey: localStorage.getItem('opinetKey') || _CFG.k3 || '',
+  // Kakao 키 — 보조용. 기본값 없음 (사용자가 필요시 입력)
+  kakaoKey: localStorage.getItem('kakaoKey') || '',
+  // 주유소 유종 — Opinet prodcd (B027 휘발유, D047 경유, B034 고급휘발유, K015 LPG, C004 등유)
+  prodcd: localStorage.getItem('prodcd') || 'B027',
   radius: parseInt(localStorage.getItem('radius') || '5000'),
   pageSize: parseInt(localStorage.getItem('pageSize') || '500'),
   services: JSON.parse(localStorage.getItem('services') || JSON.stringify({
@@ -706,6 +724,11 @@ function checkSetup() {
 function openSettings() {
   document.getElementById('naverKeyEdit').value = STATE.naverKey;
   document.getElementById('ggKeyEdit').value = STATE.ggKey;
+  // Opinet 키 + 유종 (L533 부근의 새 UI 필드)
+  const opinetEl = document.getElementById('opinetKeyEdit');
+  if (opinetEl) opinetEl.value = STATE.opinetKey;
+  const prodcdEl = document.getElementById('prodcdSelect');
+  if (prodcdEl) prodcdEl.value = STATE.prodcd;
   document.getElementById('kakaoKeyEdit').value = STATE.kakaoKey;
   document.getElementById('radiusSelect').value = STATE.radius;
   document.getElementById('pageSizeSelect').value = STATE.pageSize;
@@ -719,6 +742,11 @@ function saveSettings() {
   const newNaver = document.getElementById('naverKeyEdit').value.trim();
   const newGg = document.getElementById('ggKeyEdit').value.trim();
   const newKakao = document.getElementById('kakaoKeyEdit').value.trim();
+  // Opinet 키 + 유종
+  const opinetEl = document.getElementById('opinetKeyEdit');
+  const prodcdEl = document.getElementById('prodcdSelect');
+  const newOpinet = opinetEl ? opinetEl.value.trim() : STATE.opinetKey;
+  const newProdcd = prodcdEl ? prodcdEl.value : STATE.prodcd;
   STATE.radius = parseInt(document.getElementById('radiusSelect').value);
   STATE.pageSize = parseInt(document.getElementById('pageSizeSelect').value);
   STATE.sigun = document.getElementById('sigunSelect').value;
@@ -726,11 +754,15 @@ function saveSettings() {
   localStorage.setItem('autoSigun', STATE.autoSigun ? 'true' : 'false');
   STATE.services.money = document.getElementById('svcMoneyInput').value.trim() || 'RegionMnyFacltStus';
   STATE.kakaoKey = newKakao;
+  STATE.opinetKey = newOpinet;
+  STATE.prodcd = newProdcd;
   localStorage.setItem('radius', STATE.radius);
   localStorage.setItem('pageSize', STATE.pageSize);
   localStorage.setItem('sigun', STATE.sigun);
   localStorage.setItem('services', JSON.stringify(STATE.services));
   localStorage.setItem('kakaoKey', newKakao);
+  localStorage.setItem('opinetKey', newOpinet);
+  localStorage.setItem('prodcd', newProdcd);
   let needReload = false;
   if (newNaver !== STATE.naverKey) { localStorage.setItem('naverKey', newNaver); needReload = true; }
   if (newGg !== STATE.ggKey) { localStorage.setItem('ggKey', newGg); needReload = true; }
@@ -964,7 +996,12 @@ function detectSigunFromLocation(lat, lng) {
 // 경기도 openapi.gg.go.kr는 표준 형식:
 //   /{서비스명}?KEY=...&Type=json&pIndex=1&pSize=100&[추가파라미터]
 // ============================================================
-const API_BASE = 'https://mjmap-proxy.onrender.com/proxy?url=https://openapi.gg.go.kr';
+// ─── CORS 프록시 주소 ─────────────────────────────────────────
+// Synology DS920+ NAS (LG U+ 한국 IP) 에서 돌아가는 자체 프록시
+// DDNS: stepersjmj.synology.me, 외부 포트: 18443 (HTTPS)
+// Opinet 은 해외 IP 를 차단하므로, 국내 IP 노드 경유 필수
+const PROXY_BASE = 'https://stepersjmj.synology.me:18443/proxy';
+const API_BASE = `${PROXY_BASE}?url=https://openapi.gg.go.kr`;
 
 async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
   const qs = new URLSearchParams({
@@ -1008,83 +1045,120 @@ async function loadMoneyData() {
   return fetchGGApi(STATE.services.money, params);
 }
 // ============================================================
-// 카카오 로컬 API - 주유소 데이터 (category_group_code=OL7)
-// 공식 문서: https://developers.kakao.com/docs/latest/ko/local/dev-guide#search-by-category
-// CORS: 허용됨 (카카오 디벨로퍼스에 Web 플랫폼 도메인 등록 필요)
-// 제한: size*page ≤ 45 (최대 45개), radius 최대 20km
-// 가격 정보는 제공되지 않음 (Opinet 대체 — Opinet 은 해외 IP 차단으로 GitHub Pages 호스팅 불가)
+// Opinet 주변 주유소 API - aroundAll.do
+// 공식 문서: https://www.opinet.co.kr/api/aroundAll.do
+// 좌표계: KATEC (x=314681.8, y=544837 형식 — UTM-K 아님!)
+// 반경: 최대 5000m, 정렬: 1=거리순 2=가격순
+// 응답: XML (<OIL>…</OIL> 반복)
+// 중요: Opinet 은 해외 IP 차단 → 한국 IP 프록시(NAS) 경유 필수
+// 좌표 변환: WGS84 ⇄ KATEC (proj4js 사용)
 // ============================================================
+
+// KATEC 정의 등록 (프로그램 로딩 시 1회만 실행)
+// 기준: 경도 128, 위도 38, false easting 400000, false northing 600000, Bessel 타원체
+if (typeof proj4 !== 'undefined') {
+  proj4.defs('KATEC',
+    '+proj=tmerc +lat_0=38 +lon_0=128 +k=0.9999 ' +
+    '+x_0=400000 +y_0=600000 +ellps=bessel +units=m ' +
+    '+towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43 +no_defs');
+}
+
+function wgs84ToKatec(lat, lng) {
+  if (typeof proj4 === 'undefined') {
+    console.error('[proj4] 라이브러리가 로드되지 않음');
+    return null;
+  }
+  // proj4 는 [lng, lat] 순서
+  const [x, y] = proj4('WGS84', 'KATEC', [lng, lat]);
+  return { x, y };
+}
+
+function katecToWgs84(x, y) {
+  if (typeof proj4 === 'undefined') return null;
+  const [lng, lat] = proj4('KATEC', 'WGS84', [parseFloat(x), parseFloat(y)]);
+  return { lat, lng };
+}
+
 async function loadGasData() {
-  if (!STATE.kakaoKey) {
-    showToast('설정에서 카카오 REST API 키를 먼저 입력하세요.');
+  if (!STATE.opinetKey) {
+    showToast('설정에서 Opinet API 키를 먼저 입력하세요.');
     return [];
   }
   if (!STATE.centerPos) {
     showToast('지도 중심 위치를 확인할 수 없습니다.');
     return [];
   }
-
-  const lng = STATE.centerPos.lng;
-  const lat = STATE.centerPos.lat;
-  const radius = Math.min(STATE.radius || 3000, 20000); // 카카오 최대 20km
-  const size = 15;              // 한 페이지 최대 15개
-  const maxPage = 3;            // size*page ≤ 45 → 최대 3페이지
-
-  const all = [];
-  try {
-    for (let page = 1; page <= maxPage; page++) {
-      const url = `https://dapi.kakao.com/v2/local/search/category.json?` +
-        `category_group_code=OL7&x=${lng}&y=${lat}&radius=${radius}&size=${size}&page=${page}&sort=distance`;
-      console.log(`[Kakao 주유소] p${page}:`, url);
-      const res = await fetch(url, {
-        headers: { 'Authorization': `KakaoAK ${STATE.kakaoKey}` }
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error(`[Kakao 주유소] HTTP ${res.status}:`, errText);
-        throw new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
-      }
-      const data = await res.json();
-      const docs = data.documents || [];
-      all.push(...docs);
-      if (docs.length < size || (data.meta && data.meta.is_end)) break;
-    }
-    console.log(`[Kakao 주유소] 총 ${all.length}개 조회됨`);
-
-    // 카카오 응답 → 기존 마커/카드 렌더가 읽는 포맷으로 변환
-    return all.map(doc => ({
-      OS_NM: doc.place_name,
-      ADDR: doc.road_address_name || doc.address_name || '',
-      TELNO: doc.phone || '',
-      _LAT: parseFloat(doc.y),
-      _LNG: parseFloat(doc.x),
-      PLACE_URL: doc.place_url || '',
-      _KAKAO_CATEGORY: doc.category_name || '',
-      _BRAND: inferGasBrand(doc.place_name, doc.category_name)
-    }));
-  } catch (e) {
-    console.error('[Kakao 주유소] 호출 실패:', e);
-    showToast('주유소 데이터 로드 실패 — 카카오 키와 플랫폼 도메인 등록을 확인하세요.');
+  if (typeof proj4 === 'undefined') {
+    showToast('좌표 변환 라이브러리(proj4js)가 로드되지 않았습니다.');
     return [];
   }
-}
 
-// 카카오 place_name / category_name 에서 주유소 브랜드 추정
-// category_name 구조 예: "교통,수송 > 주유,충전 > 주유소 > SK" 또는 "... > GS칼텍스"
-function inferGasBrand(name, category) {
-  const src = ((category || '') + ' ' + (name || '')).toUpperCase();
-  if (/알뜰/.test(name + ' ' + (category || ''))) return '알뜰주유소';
-  if (/S-?OIL|에쓰오일|ESOIL/.test(src) || /에쓰|S-OIL/.test(name || '')) return 'S-OIL';
-  if (/GS/.test(src)) return 'GS칼텍스';
-  if (/\bSK\b|SK에너지|SK주유소/.test(src)) return 'SK에너지';
-  if (/현대|HD|HYUNDAI/.test(src)) return 'HD현대오일뱅크';
-  // category 마지막 세그먼트(브랜드명) 시도
-  if (category) {
-    const parts = category.split('>').map(s => s.trim()).filter(Boolean);
-    const last = parts[parts.length - 1];
-    if (last && last !== '주유소' && last !== '주유,충전') return last;
+  // 중심 좌표 WGS84 → KATEC 변환
+  const katec = wgs84ToKatec(STATE.centerPos.lat, STATE.centerPos.lng);
+  if (!katec) {
+    showToast('좌표 변환 실패');
+    return [];
   }
-  return '';
+  const x = katec.x.toFixed(1);
+  const y = katec.y.toFixed(1);
+
+  // Opinet aroundAll.do 는 최대 5km
+  const radius = Math.min(STATE.radius || 3000, 5000);
+  const prodcd = STATE.prodcd || 'B027';
+
+  // 원본 URL (프록시가 중계)
+  const opinetUrl = `https://www.opinet.co.kr/api/aroundAll.do?` +
+    `code=${encodeURIComponent(STATE.opinetKey)}` +
+    `&x=${x}&y=${y}&radius=${radius}&sort=1&prodcd=${prodcd}&out=xml`;
+  const url = `${PROXY_BASE}?url=${encodeURIComponent(opinetUrl)}`;
+
+  try {
+    console.log('[Opinet 주유소] 요청:', opinetUrl);
+    const res = await fetch(url);
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[Opinet 주유소] HTTP ${res.status}:`, errText);
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const xmlText = await res.text();
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const parseErr = doc.querySelector('parsererror');
+    if (parseErr) {
+      console.error('[Opinet 주유소] XML 파싱 실패:', xmlText.slice(0, 300));
+      throw new Error('XML 파싱 실패');
+    }
+    const oils = Array.from(doc.getElementsByTagName('OIL'));
+    console.log(`[Opinet 주유소] 총 ${oils.length}개 조회됨 (prodcd=${prodcd})`);
+
+    const getText = (node, tag) => {
+      const el = node.getElementsByTagName(tag)[0];
+      return el ? el.textContent : '';
+    };
+
+    const results = oils.map(oil => {
+      const ox = getText(oil, 'GIS_X_COOR');
+      const oy = getText(oil, 'GIS_Y_COOR');
+      const wgs = katecToWgs84(ox, oy);
+      return {
+        OS_NM: getText(oil, 'OS_NM'),
+        ADDR: getText(oil, 'NEW_ADR') || getText(oil, 'VAN_ADR') || '',
+        TELNO: getText(oil, 'TEL') || '',
+        UNI_ID: getText(oil, 'UNI_ID'),
+        PRICE: getText(oil, 'PRICE'),
+        DISTANCE: getText(oil, 'DISTANCE'),  // 미터 단위
+        POLL_DIV_CO: getText(oil, 'POLL_DIV_CO'),
+        PRODCD: prodcd,
+        _LAT: wgs ? wgs.lat : 0,
+        _LNG: wgs ? wgs.lng : 0
+      };
+    }).filter(o => o._LAT && o._LNG);
+
+    return results;
+  } catch (e) {
+    console.error('[Opinet 주유소] 호출 실패:', e);
+    showToast('주유소 데이터 로드 실패 — 프록시 상태와 Opinet 키를 확인하세요.');
+    return [];
+  }
 }
 
 // ============================================================
@@ -1130,15 +1204,22 @@ const POLL_DIV_LABEL = {
 };
 
 function getCategory(item) {
-  // 카카오 주유소 (현재 사용)
-  if (item._BRAND) return item._BRAND;
-  // 레거시: Opinet 응답이 들어올 경우 대비 (현재는 호출되지 않음)
+  // Opinet 주유소 — 브랜드 · 가격 · 거리
   const pollCode = item.POLL_DIV_CO || item.POLL_DIV_CD;
   if (pollCode) {
     const brand = POLL_DIV_LABEL[pollCode] || pollCode;
-    const priceStr = item.PRICE ? ' · ' + Number(item.PRICE).toLocaleString() + '원' : '';
-    return brand + priceStr;
+    const parts = [brand];
+    if (item.PRICE && Number(item.PRICE) > 0) {
+      parts.push(Number(item.PRICE).toLocaleString() + '원');
+    }
+    if (item.DISTANCE && Number(item.DISTANCE) > 0) {
+      const km = Number(item.DISTANCE) / 1000;
+      parts.push(km.toFixed(km < 10 ? 1 : 0) + 'km');
+    }
+    return parts.join(' · ');
   }
+  // 레거시: 카카오 브랜드 (사용 안 함, 하위 호환용)
+  if (item._BRAND) return item._BRAND;
   return item.INDUTYPE_NM || item.CATEGORY || item.SIGUN_NM || '';
 }
 
