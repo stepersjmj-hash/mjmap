@@ -1,0 +1,9 @@
+# Force CRLF for Windows batch files (CMD requires CRLF; LF corrupts line boundaries)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Force LF for shell scripts and Unix text
+*.sh  text eol=lf
+
+# Defaults for the rest — auto normalize to LF in repo, user-native on checkout
+* text=auto
