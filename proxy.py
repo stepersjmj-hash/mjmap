@@ -30,6 +30,36 @@ from urllib.error import HTTPError, URLError
 import traceback
 
 
+# ─── .env 자동 로더 (stdlib only, 의존성 없음) ───────────────────────────
+# proxy.py 와 같은 폴더의 `.env` 파일을 읽어 환경변수로 주입합니다.
+# - 이미 셸/docker 가 설정한 값은 **절대 덮어쓰지 않음** (shell/docker 우선)
+# - 빈 줄 / '#' 시작 주석 / '=' 없는 줄은 무시
+# - 값 양옆 따옴표(" 또는 ')는 벗겨냄
+# - 파일이 없으면 조용히 건너뜀 (로그만 남김)
+def _load_dotenv(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, _, v = line.partition('=')
+                k, v = k.strip(), v.strip()
+                if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
+                    v = v[1:-1]
+                if k and k not in os.environ:
+                    os.environ[k] = v
+        return True
+    except FileNotFoundError:
+        return False
+
+_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+if _load_dotenv(_ENV_PATH):
+    print(f"[proxy] 📄 .env 로드됨: {_ENV_PATH}")
+else:
+    print(f"[proxy] ℹ️  .env 없음 — 환경변수는 shell/docker 에서만 읽음")
+
+
 # ─── 보안 설정 (환경변수) ───────────────────────────────────────────────
 # Origin 허용 목록 (브라우저가 보내는 Origin 헤더와 일치 여부 확인)
 _DEFAULT_ORIGINS = "https://stepersjmj-hash.github.io,http://localhost,http://127.0.0.1"

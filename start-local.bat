@@ -21,6 +21,9 @@ if not defined PYEXE (
 echo [info] Python: %PYEXE%
 
 REM 프록시 환경변수 (localhost:3000 Origin 허용)
+REM API 키(OPINET_API_KEY, GG_API_KEY) 는 같은 폴더의 .env 에서 proxy.py 가 자동 로드합니다.
+REM   - .env 파일이 없으면 /api/gas /api/gg 엔드포인트는 500 을 반환합니다.
+REM   - 템플릿: .env.example 참고 (cp .env.example .env 후 값 채우기)
 set "ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost,http://127.0.0.1"
 set "ALLOWED_UPSTREAM_HOSTS=openapi.gg.go.kr,opinet.co.kr,dapi.kakao.com"
 set "PORT=8080"

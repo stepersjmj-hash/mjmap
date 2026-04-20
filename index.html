@@ -387,48 +387,6 @@
   .iw .iw-actions .fav-iw { background: transparent; color: var(--ink); border-color: var(--line); }
   .iw .iw-actions .fav-iw.active { background: var(--favorite); color: var(--panel); border-color: var(--favorite); }
 
-  /* Setup screen */
-  #setupScreen {
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(circle at 30% 20%, #EFE6D2 0, transparent 55%),
-      radial-gradient(circle at 70% 80%, #E8DEC4 0, transparent 60%),
-      var(--bg);
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  #setupScreen .card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 36px;
-    max-width: 480px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 30px 60px -20px rgba(26,23,19,0.2);
-  }
-  #setupScreen h1 {
-    font-size: 22px;
-    margin-bottom: 10px;
-    color: var(--ink);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  #setupScreen h1 .mark {
-    width: 34px; height: 34px; border-radius: 10px;
-    background: var(--ink); color: var(--panel);
-    display: flex; align-items: center; justify-content: center;
-  }
-  #setupScreen p.lead { color: var(--muted); font-size: 13px; margin-bottom: 24px; line-height: 1.7; }
-
   @media (max-width: 600px) {
     header h1 { font-size: 15px; }
     .filter-bar { padding: 8px; gap: 4px; }
@@ -436,38 +394,8 @@
     .panel { width: 85%; max-width: 85%; }
   }
 </style>
-<!-- proj4js — Opinet KATEC 좌표계 ↔ WGS84 변환용 (주유소 API 호출에 필요) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
 </head>
 <body>
-
-<!-- 초기 설정 화면 -->
-<div id="setupScreen">
-  <div class="card">
-    <h1>
-      <span class="mark">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>
-      </span>
-      나만의 경기도 지도
-    </h1>
-    <p class="lead">지역화폐 가맹점, 주유소 정보를 한 지도에서 확인하고 즐겨찾기할 수 있어요.<br>시작하기 위해 API 키 두 개를 입력해주세요.</p>
-
-    <label>네이버 지도 API Client ID <span style="color:var(--accent)">*</span></label>
-    <input id="naverKeyInput" type="text" placeholder="예: a1b2c3d4e5" />
-    <p class="help">네이버 클라우드 플랫폼(<a href="https://www.ncloud.com" target="_blank">ncloud.com</a>)에서 Maps → Web Dynamic Map 신청 후 발급</p>
-
-    <label>경기도 공공데이터 API 키 <span style="color:var(--accent)">*</span></label>
-    <input id="ggKeyInput" type="text" placeholder="예: 1234567890abcdef..." />
-    <p class="help">경기도 공공데이터포털(<a href="https://data.gg.go.kr" target="_blank">data.gg.go.kr</a>)에서 발급</p>
-
-    <div class="btn-row">
-      <button class="btn-primary" onclick="saveSetup()">시작하기</button>
-    </div>
-    <p class="help" style="margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line);">
-      키는 브라우저 localStorage에만 저장되며, 외부로 전송되지 않습니다.
-    </p>
-  </div>
-</div>
 
 <header>
   <div class="brand">
@@ -528,13 +456,7 @@
 <div class="modal-bg" id="settingsModal">
   <div class="modal">
     <h2>설정</h2>
-    <label>네이버 지도 API Client ID</label>
-    <input id="naverKeyEdit" type="text" />
-    <label>경기도 공공데이터 API 키</label>
-    <input id="ggKeyEdit" type="text" />
-    <label>Opinet API 키 <span style="font-weight:normal;color:var(--muted);">— 주유소 가격 조회</span></label>
-    <input id="opinetKeyEdit" type="text" placeholder="예: F2604... (opinet.co.kr 개발자센터 발급)" />
-    <p class="help">opinet.co.kr 개발자센터에서 발급. 주변 주유소 위치 + 실시간 가격 정보 제공 (한국 IP 필요 — NAS 프록시 경유).</p>
+    <p class="help" style="margin-bottom:14px;">API 키는 서버에 미리 등록되어 있어 별도 입력이 필요 없어요. 아래에서 표시 옵션만 조정하시면 됩니다.</p>
     <label>유종 선택 <span style="font-weight:normal;color:var(--muted);">— 주유소 가격</span></label>
     <select id="prodcdSelect">
       <option value="B027">휘발유 (보통)</option>
@@ -543,9 +465,6 @@
       <option value="K015">자동차용 부탄 (LPG)</option>
       <option value="C004">실내등유</option>
     </select>
-    <label>카카오 REST API 키 <span style="font-weight:normal;color:var(--muted);">— 보조 (선택)</span></label>
-    <input id="kakaoKeyEdit" type="text" placeholder="선택 입력 (현재 기본 주유소 소스는 Opinet)" />
-    <p class="help">developers.kakao.com 에서 발급. Opinet 키가 없거나 가격 조회 불필요 시 카카오로 폴백. 현재 기본 주유소 소스는 Opinet 입니다.</p>
     <label>검색 반경 (m)</label>
     <select id="radiusSelect">
       <option value="500">500m</option>
@@ -603,13 +522,6 @@
     </select>
     <p class="help">특정 시군을 선택하면 해당 지역 데이터만 가져와서 지도에 표시돼요. 전체 조회 시 수만 건이라 첫 500~1000개만 나옵니다.</p>
 
-    <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line);">
-      <p style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);">경기도 API 서비스명</p>
-      <p class="help" style="margin-bottom:12px;">data.gg.go.kr 마이페이지 → 활용신청내역 → 해당 API → 요청 URL 에서 확인. 예: <code>https://openapi.gg.go.kr/<b>서비스명</b>?KEY=...</code></p>
-      <label>지역화폐 가맹점 서비스명</label>
-      <input id="svcMoneyInput" type="text" placeholder="예: RegionMnyFacltStus" />
-    </div>
-
     <div class="btn-row">
       <button class="btn-secondary" onclick="closeSettings()">취소</button>
       <button class="btn-primary" onclick="saveSettings()">저장</button>
@@ -636,28 +548,23 @@ function _u(h) {
   return s;
 }
 const _CFG = {
-  k1: _u('4b41415e5942405f4b4f'),
-  k2: _u('181a1b191f1a1e4e1b1c1d191e18181b481f1c1d1f4c4b4b1a484c1d18181a1a'),
-  k3: _u('6c181c1a1e1b1d13131e')
+  // Naver Maps clientId — 브라우저 노출 불가피, NCP 콘솔 도메인 whitelist로 보호
+  k1: _u('4b41415e5942405f4b4f')
+  // Opinet / GG 키는 서버(.env)에서 관리 — /api/gas/*, /api/gg/* 프록시 엔드포인트 경유
 };
 
 // ============================================================
 // 상태 관리
 // ============================================================
 const STATE = {
-  naverKey: localStorage.getItem('naverKey') || _CFG.k1 || '',
-  ggKey: localStorage.getItem('ggKey') || _CFG.k2 || '',
-  // Opinet 키 — _CFG.k3 은 원래 Opinet 용으로 인코딩돼 있었음 (Kakao 로 오전환됐던 것 복구)
-  opinetKey: localStorage.getItem('opinetKey') || _CFG.k3 || '',
-  // Kakao 키 — 보조용. 기본값 없음 (사용자가 필요시 입력)
-  kakaoKey: localStorage.getItem('kakaoKey') || '',
+  // Naver Maps clientId만 클라이언트에 존재. Opinet/GG 키는 서버 전용 (프록시 /api/*).
+  naverKey: _CFG.k1 || '',
   // 주유소 유종 — Opinet prodcd (B027 휘발유, D047 경유, B034 고급휘발유, K015 LPG, C004 등유)
   prodcd: localStorage.getItem('prodcd') || 'B027',
   radius: parseInt(localStorage.getItem('radius') || '5000'),
   pageSize: parseInt(localStorage.getItem('pageSize') || '500'),
-  services: JSON.parse(localStorage.getItem('services') || JSON.stringify({
-    money: 'RegionMnyFacltStus'        // 경기지역화폐 가맹점
-  })),
+  // GG OpenAPI 서비스명 — 서버·API 표준 고정값. 향후 카테고리 추가 시 이 객체에 키 추가.
+  services: { money: 'RegionMnyFacltStus' },
   sigun: localStorage.getItem('sigun') || '',  // SIGUN_NM 필터 (예: 성남시, 수원시)
   autoSigun: localStorage.getItem('autoSigun') !== 'false',  // 내 위치 기반 자동 시군 감지 (기본 on)
   favorites: JSON.parse(localStorage.getItem('favorites') || '{}'),
@@ -670,15 +577,6 @@ const STATE = {
   centerPos: { lat: 37.4138, lng: 127.5183 } // 경기도청 부근 (기본값)
 };
 
-// URL 파라미터 ?setup=1 이면 설정 화면 강제 표시 (테스트/개발용)
-// localStorage는 건드리지 않아 사용자가 설정 화면에서 저장하면 정상 저장됨
-if (new URLSearchParams(location.search).get('setup') === '1') {
-  STATE.naverKey = '';
-  STATE.ggKey = '';
-  STATE.kakaoKey = '';
-  console.log('[setup] URL ?setup=1 감지 — 설정 화면 강제 표시');
-}
-
 // 문화행사 기능 제거됨 — 기존 즐겨찾기의 culture 항목 정리
 {
   let cleaned = false;
@@ -688,88 +586,60 @@ if (new URLSearchParams(location.search).get('setup') === '1') {
       cleaned = true;
     }
   });
-  // 기존 services.culture 값도 정리
-  if (STATE.services && STATE.services.culture) {
-    delete STATE.services.culture;
-    localStorage.setItem('services', JSON.stringify(STATE.services));
-  }
+  // (STATE.services 는 이제 하드코딩된 상수 객체 → culture 키가 들어올 일 없음)
   if (cleaned) localStorage.setItem('favorites', JSON.stringify(STATE.favorites));
 }
 
+// Phase 5 — 레거시 localStorage 키 정리 (서버 관리로 전환)
+// 과거 버전에서 사용자가 직접 입력했던 키들을 1회성으로 제거
+{
+  const legacyKeys = ['naverKey', 'ggKey', 'opinetKey', 'kakaoKey', 'services'];
+  let removed = 0;
+  legacyKeys.forEach(k => {
+    if (localStorage.getItem(k) !== null) {
+      localStorage.removeItem(k);
+      removed++;
+    }
+  });
+  if (removed > 0) console.log(`[migration] 레거시 키 ${removed}개 정리 완료 (서버에서 관리)`);
+}
+
 // ============================================================
-// 초기 설정
+// 앱 시작
 // ============================================================
-function saveSetup() {
-  const naverKey = document.getElementById('naverKeyInput').value.trim();
-  const ggKey = document.getElementById('ggKeyInput').value.trim();
-  if (!naverKey || !ggKey) {
-    alert('두 개의 API 키를 모두 입력해주세요.');
-    return;
-  }
-  localStorage.setItem('naverKey', naverKey);
-  localStorage.setItem('ggKey', ggKey);
-  STATE.naverKey = naverKey;
-  STATE.ggKey = ggKey;
-  document.getElementById('setupScreen').style.display = 'none';
+// API 키는 모두 서버(프록시)에서 관리되므로, 별도 설정 화면 없이 바로 지도 로드.
+function checkSetup() {
   loadNaverScript();
 }
 
-function checkSetup() {
-  if (STATE.naverKey && STATE.ggKey) {
-    document.getElementById('setupScreen').style.display = 'none';
-    loadNaverScript();
-  }
-}
-
 function openSettings() {
-  document.getElementById('naverKeyEdit').value = STATE.naverKey;
-  document.getElementById('ggKeyEdit').value = STATE.ggKey;
-  // Opinet 키 + 유종 (L533 부근의 새 UI 필드)
-  const opinetEl = document.getElementById('opinetKeyEdit');
-  if (opinetEl) opinetEl.value = STATE.opinetKey;
+  // 주유소 유종
   const prodcdEl = document.getElementById('prodcdSelect');
   if (prodcdEl) prodcdEl.value = STATE.prodcd;
-  document.getElementById('kakaoKeyEdit').value = STATE.kakaoKey;
   document.getElementById('radiusSelect').value = STATE.radius;
   document.getElementById('pageSizeSelect').value = STATE.pageSize;
   document.getElementById('sigunSelect').value = STATE.sigun;
   document.getElementById('autoSigunCheck').checked = STATE.autoSigun;
-  document.getElementById('svcMoneyInput').value = STATE.services.money;
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
 function saveSettings() {
-  const newNaver = document.getElementById('naverKeyEdit').value.trim();
-  const newGg = document.getElementById('ggKeyEdit').value.trim();
-  const newKakao = document.getElementById('kakaoKeyEdit').value.trim();
-  // Opinet 키 + 유종
-  const opinetEl = document.getElementById('opinetKeyEdit');
+  // 주유소 유종
   const prodcdEl = document.getElementById('prodcdSelect');
-  const newOpinet = opinetEl ? opinetEl.value.trim() : STATE.opinetKey;
   const newProdcd = prodcdEl ? prodcdEl.value : STATE.prodcd;
   STATE.radius = parseInt(document.getElementById('radiusSelect').value);
   STATE.pageSize = parseInt(document.getElementById('pageSizeSelect').value);
   STATE.sigun = document.getElementById('sigunSelect').value;
   STATE.autoSigun = document.getElementById('autoSigunCheck').checked;
-  localStorage.setItem('autoSigun', STATE.autoSigun ? 'true' : 'false');
-  STATE.services.money = document.getElementById('svcMoneyInput').value.trim() || 'RegionMnyFacltStus';
-  STATE.kakaoKey = newKakao;
-  STATE.opinetKey = newOpinet;
   STATE.prodcd = newProdcd;
+  localStorage.setItem('autoSigun', STATE.autoSigun ? 'true' : 'false');
   localStorage.setItem('radius', STATE.radius);
   localStorage.setItem('pageSize', STATE.pageSize);
   localStorage.setItem('sigun', STATE.sigun);
-  localStorage.setItem('services', JSON.stringify(STATE.services));
-  localStorage.setItem('kakaoKey', newKakao);
-  localStorage.setItem('opinetKey', newOpinet);
   localStorage.setItem('prodcd', newProdcd);
-  let needReload = false;
-  if (newNaver !== STATE.naverKey) { localStorage.setItem('naverKey', newNaver); needReload = true; }
-  if (newGg !== STATE.ggKey) { localStorage.setItem('ggKey', newGg); needReload = true; }
   closeSettings();
   showToast('설정이 저장되었습니다.');
-  if (needReload) location.reload();
-  else reloadCurrentArea();
+  reloadCurrentArea();
 }
 
 // ============================================================
@@ -1001,26 +871,30 @@ function detectSigunFromLocation(lat, lng) {
 // 그 외 (GitHub Pages 등 배포): Synology NAS (stepersjmj.synology.me:18443)
 // Opinet 은 해외 IP 를 차단하므로 배포 환경에선 국내 IP 노드(NAS) 경유 필수
 const _isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-const PROXY_BASE = _isLocalDev
-  ? 'http://localhost:8080/proxy'
-  : 'https://stepersjmj.synology.me:18443/proxy';
-const API_BASE = `${PROXY_BASE}?url=https://openapi.gg.go.kr`;
-console.log(`[proxy] ${_isLocalDev ? '🏠 로컬' : '🌐 NAS'} 프록시 사용: ${PROXY_BASE}`);
+const PROXY_ROOT = _isLocalDev
+  ? 'http://localhost:8080'
+  : 'https://stepersjmj.synology.me:18443';
+const PROXY_BASE   = `${PROXY_ROOT}/proxy`;                       // 레거시 /proxy?url= (Kakao 등 다른 upstream 용)
+const GG_API_BASE  = `${PROXY_ROOT}/api/gg`;                      // 경기도 공공데이터 추상 엔드포인트 (서버 키 주입)
+const GAS_API_BASE = `${PROXY_ROOT}/api/gas`;                     // Opinet 주유소 추상 엔드포인트 (서버 키 + 좌표변환)
+const API_BASE = `${PROXY_BASE}?url=https://openapi.gg.go.kr`;    // 호환용 (필요시 직접 호출 남겨둠)
+console.log(`[proxy] ${_isLocalDev ? '🏠 로컬' : '🌐 NAS'} 프록시 사용: ${PROXY_ROOT}`);
 
 async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
+  // 경기도 공공데이터: 서버(/api/gg/<service>)가 GG_API_KEY 를 주입하므로
+  // 여기서는 KEY 파라미터를 보내지 않음. Type=json 기본값도 서버가 주입.
   const qs = new URLSearchParams({
-    KEY: STATE.ggKey,
-    Type: 'json',
     pIndex: '1',
     pSize: String(pSize),
     ...params
   });
-  const url = `${API_BASE}/${service}?${qs.toString()}`;
+  const url = `${GG_API_BASE}/${service}?${qs.toString()}`;
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     // 경기도 API 응답 구조: { 서비스명: [ { head: [...] }, { row: [...] } ] }
+    // 서버는 JSON 을 투명하게 패스스루하므로 구조 동일.
     const root = data[service];
     if (!root) {
       // 에러 응답 처리
@@ -1035,7 +909,7 @@ async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
   } catch (e) {
     console.error(`API 호출 실패 (${service}):`, e);
     if (e.message.includes('Failed to fetch') || e.name === 'TypeError') {
-      showToast('CORS 차단? README의 프록시 안내를 확인하세요.');
+      showToast('프록시 연결 실패 — NAS/로컬 프록시가 실행 중인지 확인하세요.');
     } else {
       showToast(`데이터 로드 실패: ${e.message}`);
     }
@@ -1054,113 +928,63 @@ async function loadMoneyData() {
 // 좌표계: KATEC (x=314681.8, y=544837 형식 — UTM-K 아님!)
 // 반경: 최대 5000m, 정렬: 1=거리순 2=가격순
 // 응답: XML (<OIL>…</OIL> 반복)
-// 중요: Opinet 은 해외 IP 차단 → 한국 IP 프록시(NAS) 경유 필수
-// 좌표 변환: WGS84 ⇄ KATEC (proj4js 사용)
+// 중요: Opinet 은 해외 IP 차단 + 키 노출 금지 → 서버 프록시(/api/gas/around) 경유
+// 좌표 변환(WGS84 ⇄ KATEC)도 서버가 처리 — 클라이언트는 WGS84 그대로 전달
 // ============================================================
 
-// KATEC 정의 등록 (프로그램 로딩 시 1회만 실행)
-// 기준: 경도 128, 위도 38, false easting 400000, false northing 600000, Bessel 타원체
-if (typeof proj4 !== 'undefined') {
-  proj4.defs('KATEC',
-    '+proj=tmerc +lat_0=38 +lon_0=128 +k=0.9999 ' +
-    '+x_0=400000 +y_0=600000 +ellps=bessel +units=m ' +
-    '+towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43 +no_defs');
-}
-
-function wgs84ToKatec(lat, lng) {
-  if (typeof proj4 === 'undefined') {
-    console.error('[proj4] 라이브러리가 로드되지 않음');
-    return null;
-  }
-  // proj4 는 [lng, lat] 순서
-  const [x, y] = proj4('WGS84', 'KATEC', [lng, lat]);
-  return { x, y };
-}
-
-function katecToWgs84(x, y) {
-  if (typeof proj4 === 'undefined') return null;
-  const [lng, lat] = proj4('KATEC', 'WGS84', [parseFloat(x), parseFloat(y)]);
-  return { lat, lng };
-}
-
 async function loadGasData() {
-  if (!STATE.opinetKey) {
-    showToast('설정에서 Opinet API 키를 먼저 입력하세요.');
-    return [];
-  }
+  // 서버(/api/gas/around)가 OPINET_API_KEY 주입 + KATEC 좌표변환까지 처리.
+  // 클라이언트는 WGS84 좌표·반경·유종만 넘겨주면 됨.
   if (!STATE.centerPos) {
     showToast('지도 중심 위치를 확인할 수 없습니다.');
     return [];
   }
-  if (typeof proj4 === 'undefined') {
-    showToast('좌표 변환 라이브러리(proj4js)가 로드되지 않았습니다.');
-    return [];
-  }
 
-  // 중심 좌표 WGS84 → KATEC 변환
-  const katec = wgs84ToKatec(STATE.centerPos.lat, STATE.centerPos.lng);
-  if (!katec) {
-    showToast('좌표 변환 실패');
-    return [];
-  }
-  const x = katec.x.toFixed(1);
-  const y = katec.y.toFixed(1);
-
-  // Opinet aroundAll.do 는 최대 5km
-  const radius = Math.min(STATE.radius || 3000, 5000);
+  const radius = Math.min(STATE.radius || 3000, 5000);  // Opinet 최대 5km
   const prodcd = STATE.prodcd || 'B027';
 
-  // 원본 URL (프록시가 중계)
-  const opinetUrl = `https://www.opinet.co.kr/api/aroundAll.do?` +
-    `code=${encodeURIComponent(STATE.opinetKey)}` +
-    `&x=${x}&y=${y}&radius=${radius}&sort=1&prodcd=${prodcd}&out=xml`;
-  const url = `${PROXY_BASE}?url=${encodeURIComponent(opinetUrl)}`;
+  const qs = new URLSearchParams({
+    lat: String(STATE.centerPos.lat),
+    lng: String(STATE.centerPos.lng),
+    radius: String(radius),
+    prodcd: prodcd
+  });
+  const url = `${GAS_API_BASE}/around?${qs.toString()}`;
 
   try {
-    console.log('[Opinet 주유소] 요청:', opinetUrl);
+    console.log(`[주유소] 요청: /api/gas/around prodcd=${prodcd} r=${radius}m`);
     const res = await fetch(url);
     if (!res.ok) {
       const errText = await res.text();
-      console.error(`[Opinet 주유소] HTTP ${res.status}:`, errText);
-      throw new Error(`HTTP ${res.status}`);
+      console.error(`[주유소] HTTP ${res.status}:`, errText);
+      showToast(`주유소 데이터 로드 실패 (HTTP ${res.status})`);
+      return [];
     }
-    const xmlText = await res.text();
-    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
-    const parseErr = doc.querySelector('parsererror');
-    if (parseErr) {
-      console.error('[Opinet 주유소] XML 파싱 실패:', xmlText.slice(0, 300));
-      throw new Error('XML 파싱 실패');
-    }
-    const oils = Array.from(doc.getElementsByTagName('OIL'));
-    console.log(`[Opinet 주유소] 총 ${oils.length}개 조회됨 (prodcd=${prodcd})`);
+    const data = await res.json();
+    const items = Array.isArray(data.items) ? data.items : [];
+    console.log(`[주유소] ${items.length}개 조회됨 (prodcd=${data.prodcd || prodcd})`);
 
-    const getText = (node, tag) => {
-      const el = node.getElementsByTagName(tag)[0];
-      return el ? el.textContent : '';
-    };
-
-    const results = oils.map(oil => {
-      const ox = getText(oil, 'GIS_X_COOR');
-      const oy = getText(oil, 'GIS_Y_COOR');
-      const wgs = katecToWgs84(ox, oy);
-      return {
-        OS_NM: getText(oil, 'OS_NM'),
-        ADDR: getText(oil, 'NEW_ADR') || getText(oil, 'VAN_ADR') || '',
-        TELNO: getText(oil, 'TEL') || '',
-        UNI_ID: getText(oil, 'UNI_ID'),
-        PRICE: getText(oil, 'PRICE'),
-        DISTANCE: getText(oil, 'DISTANCE'),  // 미터 단위
-        POLL_DIV_CO: getText(oil, 'POLL_DIV_CO'),
-        PRODCD: prodcd,
-        _LAT: wgs ? wgs.lat : 0,
-        _LNG: wgs ? wgs.lng : 0
-      };
-    }).filter(o => o._LAT && o._LNG);
-
-    return results;
+    // 서버 필드(name/price/brand...) → 레거시 필드(OS_NM/PRICE/POLL_DIV_CO...) 매핑
+    // downstream (getCategory/getName/getAddr/getLatLng) 는 레거시 네이밍 사용 중이라 유지.
+    return items.map(it => ({
+      OS_NM: it.name,
+      ADDR: it.addr || '',                     // Opinet aroundAll.do 는 주소 미반환 (빈 문자열)
+      TELNO: it.tel || '',
+      UNI_ID: it.id,
+      PRICE: it.price,                         // Number 로 옴 — downstream Number()/parseFloat() 호환
+      DISTANCE: it.distance_m,                 // 미터 단위 Number
+      POLL_DIV_CO: it.brand,                   // SKE/GSC/HDO/SOL/RTE 등
+      PRODCD: it.prodcd || prodcd,
+      _LAT: it.lat,
+      _LNG: it.lng
+    })).filter(o => o._LAT && o._LNG);
   } catch (e) {
-    console.error('[Opinet 주유소] 호출 실패:', e);
-    showToast('주유소 데이터 로드 실패 — 프록시 상태와 Opinet 키를 확인하세요.');
+    console.error('[주유소] 호출 실패:', e);
+    if (e.message && (e.message.includes('Failed to fetch') || e.name === 'TypeError')) {
+      showToast('프록시 연결 실패 — NAS/로컬 프록시가 실행 중인지 확인하세요.');
+    } else {
+      showToast(`주유소 데이터 로드 실패: ${e.message || e}`);
+    }
     return [];
   }
 }
