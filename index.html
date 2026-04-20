@@ -997,11 +997,15 @@ function detectSigunFromLocation(lat, lng) {
 //   /{서비스명}?KEY=...&Type=json&pIndex=1&pSize=100&[추가파라미터]
 // ============================================================
 // ─── CORS 프록시 주소 ─────────────────────────────────────────
-// Synology DS920+ NAS (LG U+ 한국 IP) 에서 돌아가는 자체 프록시
-// DDNS: stepersjmj.synology.me, 외부 포트: 18443 (HTTPS)
-// Opinet 은 해외 IP 를 차단하므로, 국내 IP 노드 경유 필수
-const PROXY_BASE = 'https://stepersjmj.synology.me:18443/proxy';
+// 로컬 개발 (localhost / 127.0.0.1 / start-local.bat) 시: 로컬 proxy.py (8080)
+// 그 외 (GitHub Pages 등 배포): Synology NAS (stepersjmj.synology.me:18443)
+// Opinet 은 해외 IP 를 차단하므로 배포 환경에선 국내 IP 노드(NAS) 경유 필수
+const _isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const PROXY_BASE = _isLocalDev
+  ? 'http://localhost:8080/proxy'
+  : 'https://stepersjmj.synology.me:18443/proxy';
 const API_BASE = `${PROXY_BASE}?url=https://openapi.gg.go.kr`;
+console.log(`[proxy] ${_isLocalDev ? '🏠 로컬' : '🌐 NAS'} 프록시 사용: ${PROXY_BASE}`);
 
 async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
   const qs = new URLSearchParams({

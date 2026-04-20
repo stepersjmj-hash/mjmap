@@ -36,6 +36,13 @@ services:
       # DSM 역방향 프록시 대상 포트도 같이 수정하세요.
       PORT: "8080"
 
+      # ─── 추상 엔드포인트용 서버 보관 API 키 (클라이언트는 모름) ──────────
+      # 값은 같은 폴더의 `.env` 파일에서 주입됩니다 (Docker Compose 기본 동작).
+      # .env 파일은 git 에 포함시키지 마세요 (.gitignore 에 등록됨).
+      # 빈 문자열이면 해당 엔드포인트가 500 을 반환합니다.
+      OPINET_API_KEY: "${OPINET_API_KEY:-}"
+      GG_API_KEY: "${GG_API_KEY:-}"
+
     # 로그 로테이션 (NAS 디스크 보호 — 무한히 쌓이는 것 방지)
     logging:
       driver: json-file
