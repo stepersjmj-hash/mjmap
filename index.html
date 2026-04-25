@@ -38,6 +38,7 @@
   <div class="filter-bar">
     <button class="chip" data-cat="money" onclick="toggleCategory('money')"><span class="tint"></span>지역화폐</button>
     <button class="chip" data-cat="gas" onclick="toggleCategory('gas')"><span class="tint"></span>주유소</button>
+    <button class="chip" data-cat="truck" onclick="toggleCategory('truck')"><span class="tint"></span>푸드트럭</button>
     <button class="chip" data-cat="fav" onclick="toggleCategory('fav')"><span class="tint"></span>즐겨찾기</button>
   </div>
 
@@ -71,11 +72,7 @@
     <p class="help" style="margin-bottom:14px;">API 키는 서버에 미리 등록되어 있어 별도 입력이 필요 없어요. 아래에서 표시 옵션만 조정하시면 됩니다.</p>
     <label>유종 선택 <span style="font-weight:normal;color:var(--muted);">— 주유소 가격</span></label>
     <select id="prodcdSelect">
-      <option value="B027">휘발유 (보통)</option>
-      <option value="D047">자동차용 경유</option>
-      <option value="B034">고급휘발유</option>
-      <option value="K015">자동차용 부탄 (LPG)</option>
-      <option value="C004">실내등유</option>
+      <!-- 옵션은 ui.js::populateProdcdOptions() 에서 gas/config.js::GAS_PRODCD_OPTIONS 기준으로 주입 -->
     </select>
     <label>검색 반경 (m)</label>
     <select id="radiusSelect">
@@ -99,38 +96,8 @@
 
     <label>시군 필터 <span style="font-weight:normal;color:var(--muted);">— 지역화폐</span></label>
     <select id="sigunSelect">
+      <!-- 옵션은 ui.js::populateSigunOptions() 에서 config.js::GG_SIGUNGU 기준으로 주입 -->
       <option value="">전체 (필터 없음)</option>
-      <option value="수원시">수원시</option>
-      <option value="성남시">성남시</option>
-      <option value="고양시">고양시</option>
-      <option value="용인시">용인시</option>
-      <option value="부천시">부천시</option>
-      <option value="안산시">안산시</option>
-      <option value="안양시">안양시</option>
-      <option value="화성시">화성시</option>
-      <option value="남양주시">남양주시</option>
-      <option value="평택시">평택시</option>
-      <option value="의정부시">의정부시</option>
-      <option value="시흥시">시흥시</option>
-      <option value="파주시">파주시</option>
-      <option value="광명시">광명시</option>
-      <option value="김포시">김포시</option>
-      <option value="군포시">군포시</option>
-      <option value="광주시">광주시</option>
-      <option value="이천시">이천시</option>
-      <option value="양주시">양주시</option>
-      <option value="오산시">오산시</option>
-      <option value="구리시">구리시</option>
-      <option value="안성시">안성시</option>
-      <option value="포천시">포천시</option>
-      <option value="의왕시">의왕시</option>
-      <option value="하남시">하남시</option>
-      <option value="여주시">여주시</option>
-      <option value="동두천시">동두천시</option>
-      <option value="과천시">과천시</option>
-      <option value="양평군">양평군</option>
-      <option value="가평군">가평군</option>
-      <option value="연천군">연천군</option>
     </select>
     <p class="help">특정 시군을 선택하면 해당 지역 데이터만 가져와서 지도에 표시돼요. 전체 조회 시 수만 건이라 첫 500~1000개만 나옵니다.</p>
 
@@ -149,13 +116,28 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/config.js"></script>
-<script src="js/state.js"></script>
-<script src="js/api.js"></script>
-<script src="js/map.js"></script>
-<script src="js/markers.js"></script>
-<script src="js/favorites.js"></script>
-<script src="js/ui.js"></script>
+<!-- ============================================================
+     JS 로드 순서 (의존 관계상 이 순서 엄수)
+     1) 공통 상수 (ICONS 빈 객체 선언)
+     2) 기능별 상수 (ICONS.money / ICONS.gas 등록, POLL_DIV_LABEL/RANK_STYLES)
+     3) 공통 상태 → 공통 API → 기능별 API
+     4) 공통 지도 → 공통 마커 → 기능별 마커 확장
+     5) 공통 즐겨찾기 → 공통 UI → 부트스트랩
+     ============================================================ -->
+<script src="js/common/config.js"></script>
+<script src="js/money/config.js"></script>
+<script src="js/gas/config.js"></script>
+<script src="js/truck/config.js"></script>
+<script src="js/common/state.js"></script>
+<script src="js/common/api.js"></script>
+<script src="js/money/api.js"></script>
+<script src="js/gas/api.js"></script>
+<script src="js/truck/api.js"></script>
+<script src="js/common/map.js"></script>
+<script src="js/common/markers.js"></script>
+<script src="js/gas/markers.js"></script>
+<script src="js/common/favorites.js"></script>
+<script src="js/common/ui.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

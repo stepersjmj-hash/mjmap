@@ -10,6 +10,7 @@
     --accent: #B76E4A;       /* terracotta */
     --money: #7E8C5C;        /* olive */
     --gas: #B76E4A;          /* terracotta */
+    --truck: #D9A441;        /* mustard */
     --favorite: #9B6A7C;     /* dusty rose */
     --shadow: 0 8px 24px -10px rgba(26,23,19,0.18);
     --shadow-sm: 0 2px 8px -2px rgba(26,23,19,0.12);
@@ -114,6 +115,7 @@
   }
   .chip[data-cat="money"] .tint { background: var(--money); }
   .chip[data-cat="gas"]   .tint { background: var(--gas); }
+  .chip[data-cat="truck"] .tint { background: var(--truck); }
   .chip[data-cat="fav"]   .tint { background: var(--favorite); }
   .chip:hover { color: var(--ink); border-color: var(--ink); }
   .chip.active { background: var(--ink); color: var(--panel); border-color: var(--ink); }
@@ -218,6 +220,7 @@
   }
   .badge.money { background: var(--money); }
   .badge.gas   { background: var(--gas); }
+  .badge.truck { background: var(--truck); }
 
   .fav-btn {
     background: transparent;

@@ -1,11 +1,9 @@
 // ============================================================
-// state.js — 전역 상태 + localStorage 마이그레이션
-// config.js 이후, app.js 이전에 로드되어야 함 (_CFG.k1 의존)
+// common/state.js — 전역 상태 + localStorage 마이그레이션
+// common/config.js 이후, 기능 모듈 이전에 로드
+//   - STATE.services 는 money/config.js 에서 확장
 // ============================================================
 
-// ============================================================
-// 상태 관리
-// ============================================================
 const STATE = {
   // Naver Maps clientId만 클라이언트에 존재. Opinet/GG 키는 서버 전용 (프록시 /api/*).
   naverKey: _CFG.k1 || '',
@@ -13,14 +11,14 @@ const STATE = {
   prodcd: localStorage.getItem('prodcd') || 'B027',
   radius: parseInt(localStorage.getItem('radius') || '5000'),
   pageSize: parseInt(localStorage.getItem('pageSize') || '500'),
-  // GG OpenAPI 서비스명 — 서버·API 표준 고정값. 향후 카테고리 추가 시 이 객체에 키 추가.
-  services: { money: 'RegionMnyFacltStus' },
+  // GG OpenAPI 서비스명 — 각 기능 config 에서 등록 (money/config.js 등)
+  services: {},
   sigun: localStorage.getItem('sigun') || '',  // SIGUN_NM 필터 (예: 성남시, 수원시)
   autoSigun: localStorage.getItem('autoSigun') !== 'false',  // 내 위치 기반 자동 시군 감지 (기본 on)
   favorites: JSON.parse(localStorage.getItem('favorites') || '{}'),
-  active: { money: false, gas: false, fav: true },
-  markers: { money: [], gas: [], fav: [] },
-  data: { money: [], gas: [] },
+  active: { money: false, gas: false, truck: false, fav: true },
+  markers: { money: [], gas: [], truck: [], fav: [] },
+  data: { money: [], gas: [], truck: [] },
   map: null,
   myLocationMarker: null,
   currentInfoWindow: null,
@@ -36,12 +34,10 @@ const STATE = {
       cleaned = true;
     }
   });
-  // (STATE.services 는 이제 하드코딩된 상수 객체 → culture 키가 들어올 일 없음)
   if (cleaned) localStorage.setItem('favorites', JSON.stringify(STATE.favorites));
 }
 
 // Phase 5 — 레거시 localStorage 키 정리 (서버 관리로 전환)
-// 과거 버전에서 사용자가 직접 입력했던 키들을 1회성으로 제거
 {
   const legacyKeys = ['naverKey', 'ggKey', 'opinetKey', 'kakaoKey', 'services'];
   let removed = 0;
@@ -51,6 +47,5 @@ const STATE = {
       removed++;
     }
   });
-  if (removed > 0) console.log(`[migration] 레거시 키 ${removed}개 정리 완료 (서버에서 관리)`);
+  if (removed > 0) console.log('[migration] legacy localStorage keys cleaned (count=' + removed + ')');
 }
-

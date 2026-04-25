@@ -1,14 +1,10 @@
 // ============================================================
-// map.js — 네이버 지도 SDK 로드 / 지도 초기화 / 역지오코딩
-// 의존: config.js (_CFG.k1/_isLocalDev/PROXY_BASE),
-//       state.js (STATE),
-//       app.js (showToast/showLoading/reloadCurrentArea — 런타임 호출 시점엔 정의됨)
-// 로드 순서: config → state → api → map → markers → app
+// common/map.js — 네이버 지도 SDK 로드 / 초기화 / 역지오코딩
+// 의존: common/config.js, common/state.js,
+//       common/ui.js (showToast/closePanel), common/favorites.js (renderFavorites),
+//       common/ui.js (reloadCurrentArea — 런타임 호출 시점엔 정의됨)
 // ============================================================
 
-// ============================================================
-// 네이버 지도 로드
-// ============================================================
 async function loadNaverScript() {
   window.navermap_authFailure = function() {
     console.error('[네이버지도] 인증 실패 — Client ID 오류 또는 Web 서비스 URL 미등록');
@@ -33,10 +29,8 @@ async function loadNaverScript() {
 
   for (const cand of candidates) {
     try {
-      // fetch로 먼저 상태 확인 (CORS로 body는 못 읽지만 network error vs HTTP error 구분 가능)
       console.log(`[네이버지도] ${cand.label} 진단 중: ${cand.url}`);
       const res = await fetch(cand.url, { method: 'GET', mode: 'no-cors' });
-      // no-cors 모드에서는 상태를 못 읽지만 요청이 성공하면 여기 도달
       console.log(`[네이버지도] ${cand.label} 네트워크 응답 받음, <script> 태그로 실행 시도`);
       await loadScriptTag(cand.url);
       if (typeof naver !== 'undefined' && naver.maps) {
@@ -107,11 +101,9 @@ function initMap() {
         STATE.centerPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         STATE.map.setCenter(new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng));
         addMyLocationMarker();
-        // 자동 시군 감지
         if (STATE.autoSigun) {
           detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng).catch(() => {});
         }
-        // 즐겨찾기는 자동 표시
         renderFavorites();
       },
       err => { console.warn('위치 정보 사용 불가:', err); renderFavorites(); },
@@ -120,8 +112,6 @@ function initMap() {
   } else {
     renderFavorites();
   }
-
-  // 지도 이동 시 즐겨찾기는 항상 유지
 }
 
 function addMyLocationMarker() {
@@ -149,7 +139,6 @@ function goToMyLocation() {
       STATE.map.setCenter(new naver.maps.LatLng(STATE.centerPos.lat, STATE.centerPos.lng));
       STATE.map.setZoom(15);
       addMyLocationMarker();
-      // 내 위치 기반 자동 시군 감지 (설정에서 꺼둔 경우 제외)
       if (STATE.autoSigun !== false) {
         detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng)
           .then(() => reloadCurrentArea())
@@ -193,18 +182,16 @@ function detectSigunFromLocation(lat, lng) {
         if (!results || results.length === 0) {
           return reject(new Error('No results'));
         }
-        // 가장 상세한 주소 (보통 첫번째)
         const region = results[0].region;
         const area1 = (region.area1 && region.area1.name) || '';  // 시도 (경기도)
         const area2 = (region.area2 && region.area2.name) || '';  // 시군구 (성남시 분당구 / 수원시 영통구 / 가평군)
         const area3 = (region.area3 && region.area3.name) || '';  // 읍면동
 
-        // SIGUN_NM은 시/군 단위 (예: "성남시", "가평군"). 구는 공백으로 구분되어 뒤에 붙음.
+        // SIGUN_NM 은 시/군 단위 (예: "성남시", "가평군"). 구는 공백으로 구분되어 뒤에 붙음.
         const sigun = area2.split(' ')[0];
 
         console.log(`[역지오코딩] ✅ ${area1} > ${area2} > ${area3} → SIGUN_NM=${sigun}`);
 
-        // 경기도 아니면 경고
         if (area1 && !area1.includes('경기')) {
           showToast(`📍 현재 위치: ${area1} ${area2} (경기도 밖이라 필터 미적용)`);
           STATE.sigun = '';
@@ -213,7 +200,6 @@ function detectSigunFromLocation(lat, lng) {
           showToast(`📍 ${area2}${area3 ? ' ' + area3 : ''} · 시군 필터: ${sigun}`);
         }
         localStorage.setItem('sigun', STATE.sigun);
-        // 설정 UI 드롭다운도 동기화
         const sel = document.getElementById('sigunSelect');
         if (sel) sel.value = STATE.sigun;
         resolve({ area1, area2, area3, sigun });
@@ -224,4 +210,3 @@ function detectSigunFromLocation(lat, lng) {
     });
   });
 }
-
