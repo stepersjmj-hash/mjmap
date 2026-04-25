@@ -18,6 +18,23 @@ function checkSetup() {
   loadNaverScript();
 }
 
+// 페이지 로드 시 STATE.active 가 true 인 데이터 카테고리 자동 활성화
+// (chip class + 데이터 로드 + 렌더). map.js 의 initMap 끝부분에서 호출됨.
+async function initActiveCategories() {
+  for (const cat of DATA_CATEGORIES) {
+    if (STATE.active[cat]) {
+      const chip = document.querySelector(`.chip[data-cat="${cat}"]`);
+      if (chip) chip.classList.add('active');
+      await loadAndRenderCategory(cat);
+    }
+  }
+  // 즐겨찾기도 기본 active 면 chip 클래스 동기화 (renderFavorites 는 map.js 에서 이미 호출)
+  if (STATE.active.fav) {
+    const favChip = document.querySelector(`.chip[data-cat="fav"]`);
+    if (favChip) favChip.classList.add('active');
+  }
+}
+
 // 설정 모달 <select id="sigunSelect"> 에 money/config.js::GG_SIGUNGU 주입
 function populateSigunOptions() {
   const sel = document.getElementById('sigunSelect');
@@ -145,6 +162,11 @@ async function loadAndRenderCategory(cat) {
     else if (cat === 'bluer') items = await loadBluerData();
 
     items = items || [];
+    // 비동기 fetch 동안 사용자가 다른 탭으로 바꿨으면 렌더링 취소 (race condition 방지)
+    if (!STATE.active[cat]) {
+      console.log(`[${cat}] 비활성화됨 — 렌더 취소 (다른 탭 선택)`);
+      return;
+    }
     console.log(`[${cat}] API 응답 ${items.length}개 받음. 샘플:`, items[0]);
 
     const withCoords = items.filter(it => {

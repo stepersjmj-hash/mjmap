@@ -105,12 +105,14 @@ function initMap() {
           detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng).catch(() => {});
         }
         renderFavorites();
+        initActiveCategories();
       },
-      err => { console.warn('위치 정보 사용 불가:', err); renderFavorites(); },
+      err => { console.warn('위치 정보 사용 불가:', err); renderFavorites(); initActiveCategories(); },
       { timeout: 5000 }
     );
   } else {
     renderFavorites();
+    initActiveCategories();
   }
 }
 
