@@ -8,15 +8,15 @@
 //   SIGUN_NM, BIZPLC_NM(사업장명), BSN_STATE_NM(영업상태명),
 //   SANITTN_INDUTYPE_NM(위생업종명), SANITTN_BIZCOND_NM(위생업태명),
 //   REFINE_ROADNM_ADDR, REFINE_LOTNO_ADDR, REFINE_WGS84_LAT, REFINE_WGS84_LOGT
+//
+// 정책: UNFILTERED_CATEGORIES 멤버 — 시군·반경 필터 무시하고 경기도 전체 표시.
+// 단, '폐업' 등 비영업 사업장은 항상 제외 (데이터 신뢰성 차원).
 // ============================================================
 
 async function loadTruckData() {
-  // 지역화폐와 동일한 시군 필터 사용 (SIGUN_NM)
-  const params = STATE.sigun ? { SIGUN_NM: STATE.sigun } : {};
-  const items = await fetchGGApi(TRUCK_SERVICE_NAME, params);
+  const items = await fetchGGApi(TRUCK_SERVICE_NAME, {});
 
-  // 폐업 등 비영업 사업장 제외 — BSN_STATE_NM 에 '영업' 또는 '정상' 키워드 포함 시만 통과
-  // 상태값이 비어 있는 경우도 통과시킴(안전장치 — API 필드 결측 대비)
+  // 폐업 등 비영업 사업장 제외 — 영업상태 필터는 항상 적용
   return items.filter(it => {
     const state = (it.BSN_STATE_NM || '').trim();
     if (!state) return true;

@@ -123,7 +123,13 @@ async function syncWithMapView() {
     try {
       await detectSigunFromLocation(STATE.centerPos.lat, STATE.centerPos.lng);
     } catch (e) {
-      console.warn('[syncMapView] 역지오코딩 실패, 기존 sigun 유지:', STATE.sigun);
+      // 역지오코딩 실패 (해상/해외/인증) — autoSigun 모드이므로 필터 해제해 "전체" 쿼리
+      // (기존 sigun 을 남기면 사용자가 지도를 옮겨도 엉뚱한 시군 필터가 따라다님)
+      console.warn('[syncMapView] 역지오코딩 실패, 시군 필터 해제:', (e && e.message) || e);
+      STATE.sigun = '';
+      localStorage.setItem('sigun', '');
+      const sel = document.getElementById('sigunSelect');
+      if (sel) sel.value = '';
     }
   }
 }
@@ -135,6 +141,7 @@ async function loadAndRenderCategory(cat) {
     if (cat === 'money') items = await loadMoneyData();
     else if (cat === 'gas') items = await loadGasData();
     else if (cat === 'truck') items = await loadTruckData();
+    else if (cat === 'street') items = await loadStreetData();
 
     items = items || [];
     console.log(`[${cat}] API 응답 ${items.length}개 받음. 샘플:`, items[0]);
@@ -145,14 +152,27 @@ async function loadAndRenderCategory(cat) {
     });
     console.log(`[${cat}] 좌표 있는 항목: ${withCoords.length}개`);
 
-    const filtered = filterByRadius(items, STATE.centerPos.lat, STATE.centerPos.lng, STATE.radius);
-    console.log(`[${cat}] 반경 ${STATE.radius}m 내: ${filtered.length}개 (중심 ${STATE.centerPos.lat.toFixed(4)},${STATE.centerPos.lng.toFixed(4)})`);
+    // UNFILTERED_CATEGORIES 멤버는 반경 필터 우회 — 항상 전체 표시
+    const isUnfiltered = typeof UNFILTERED_CATEGORIES !== 'undefined' && UNFILTERED_CATEGORIES.includes(cat);
+    const filtered = isUnfiltered
+      ? items
+      : filterByRadius(items, STATE.centerPos.lat, STATE.centerPos.lng, STATE.radius);
+    if (isUnfiltered) {
+      console.log(`[${cat}] 필터 미적용 — ${filtered.length}개 전체 표시`);
+    } else {
+      console.log(`[${cat}] 반경 ${STATE.radius}m 내: ${filtered.length}개 (중심 ${STATE.centerPos.lat.toFixed(4)},${STATE.centerPos.lng.toFixed(4)})`);
+    }
 
     STATE.data[cat] = filtered;
     renderMarkers(cat, filtered);
 
     if (items.length === 0) {
-      showToast(`${ICONS[cat].label}: API 응답이 비어 있어요. 콘솔 확인.`);
+      // sigun 필터가 박혀있으면 그게 원인일 가능성이 큼 — 명시적 힌트 제공
+      if (STATE.sigun) {
+        showToast(`${ICONS[cat].label}: '${STATE.sigun}'에 등록된 데이터 없음 — 설정에서 시군 필터를 '전체'로 바꿔보세요.`);
+      } else {
+        showToast(`${ICONS[cat].label}: API 응답 0건 — 콘솔(F12) 확인`);
+      }
     } else if (withCoords.length === 0) {
       showToast(`${ICONS[cat].label}: ${items.length}개 받았지만 좌표 필드 없음. F12 확인.`);
       console.warn(`[${cat}] 좌표 필드를 찾을 수 없음. 첫 항목 키:`, Object.keys(items[0] || {}));
@@ -283,7 +303,7 @@ function toggleFavoriteFromList(id, cat, btn) {
 function closePanel() { document.getElementById('sidePanel').classList.remove('open'); }
 
 // ============================================================
-// UI 헬퍼
+// UI helpers
 // ============================================================
 function showToast(msg) {
   const t = document.getElementById('toast');

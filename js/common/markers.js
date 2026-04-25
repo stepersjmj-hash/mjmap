@@ -175,7 +175,7 @@ function openInfoWindow(target, cat, item) {
   const addr = getAddr(item);
   const category = getCategory(item);
   const ll = getLatLng(item);
-  const phone = item.TELNO || item.TELNO_INFO || '';
+  const phone = item.TELNO || item.TELNO_INFO || item.MNGINST_TELNO || '';
 
   const content = `
     <div class="iw">

@@ -21,9 +21,15 @@ async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
     const data = await res.json();
     const root = data[service];
     if (!root) {
-      if (data.RESULT) {
+      const code = data.RESULT && data.RESULT.CODE;
+      const msg  = data.RESULT && data.RESULT.MESSAGE;
+      // INFO-200 = '해당하는 데이터가 없습니다' — 정상 빈 응답이므로 에러 토스트 생략
+      // (downstream 의 "0개" 토스트가 자연스럽게 처리)
+      if (code === 'INFO-200') {
+        console.info(`[${service}] 데이터 없음: ${msg}`);
+      } else if (data.RESULT) {
         console.error('API 에러:', data.RESULT);
-        showToast(`API 오류: ${data.RESULT.MESSAGE || '알 수 없음'}`);
+        showToast(`API 오류: ${msg || '알 수 없음'}`);
       }
       return [];
     }
@@ -61,6 +67,7 @@ function getLatLng(item) {
 function getName(item) {
   return item.CMPNM_NM || item.FCLTY_NM || item.GAS_STN_NM || item.OS_NM ||
          item.BIZPLC_NM ||                    // 푸드트럭(Resrestrtfodtuck): 사업장명
+         item.DSTNC_NM_INST_NM ||             // 특화거리(REGIONSPECLIZDSTNC): 거리명
          item.NM || item.BIZ_NM || '이름 없음';
 }
 
@@ -91,6 +98,15 @@ function getCategory(item) {
   // 푸드트럭(Resrestrtfodtuck): 위생업종명 · 위생업태명 (예: "휴게음식점 · 푸드트럭")
   if (item.SANITTN_INDUTYPE_NM || item.SANITTN_BIZCOND_NM) {
     return [item.SANITTN_INDUTYPE_NM, item.SANITTN_BIZCOND_NM].filter(Boolean).join(' · ');
+  }
+  // 특화거리(REGIONSPECLIZDSTNC): 총길이(m) · 점포수 조합 (연도는 표시 제외)
+  if (item.TOT_LENG || item.STORE_CNT) {
+    const parts = [];
+    const len = Number(item.TOT_LENG);
+    const cnt = Number(item.STORE_CNT);
+    if (len > 0) parts.push(`${len.toLocaleString()}m`);
+    if (cnt > 0) parts.push(`점포 ${cnt.toLocaleString()}개`);
+    if (parts.length) return parts.join(' · ');
   }
   return item.INDUTYPE_NM || item.CATEGORY || item.SIGUN_NM || '';
 }
