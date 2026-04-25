@@ -52,12 +52,30 @@ function makeMarkerIcon(cat, isFav, rank, item) {
   const borderColor = isFav ? FAV_BORDER : conf.color;
   const stemColor   = isFav ? FAV_BORDER : conf.color;
 
+  // 블루리본: 리본수만큼 마커 위에 작은 리본 표시 (1~3개)
+  const ribbonCount = (cat === 'bluer' && item) ? Math.min(Number(item['리본수']) || 0, 3) : 0;
+  const ribbonH = 12;
+  const markerTop = ribbonCount > 0 ? ribbonH + 4 : 0;
+  const containerH = 52 + markerTop;
+
+  let ribbonsHtml = '';
+  if (ribbonCount > 0) {
+    const ribbonW = 9, gap = 2;
+    const totalW = ribbonCount * ribbonW + (ribbonCount - 1) * gap;
+    const startX = (40 - totalW) / 2;
+    for (let i = 0; i < ribbonCount; i++) {
+      const x = startX + i * (ribbonW + gap);
+      ribbonsHtml += `<svg style="position:absolute;top:0;left:${x}px;" width="${ribbonW}" height="${ribbonH}" viewBox="0 0 9 12" fill="${conf.color}" stroke="${IVORY}" stroke-width="0.5"><path d="M0 0 L9 0 L9 11 L4.5 8 L0 11 Z"/></svg>`;
+    }
+  }
+
   return {
-    content: `<div style="position:relative;width:40px;height:52px;font-family:inherit;">
-      <div style="position:absolute;top:0;left:2px;width:36px;height:36px;background:${bgColor};border:1.5px solid ${borderColor};border-radius:12px;display:flex;align-items:center;justify-content:center;color:${iconColor};box-shadow:0 4px 10px -2px rgba(26,23,19,0.2);">${conf.svg}</div>
-      <div style="position:absolute;top:36px;left:50%;transform:translateX(-50%);width:1.5px;height:8px;background:${stemColor};"></div>
+    content: `<div style="position:relative;width:40px;height:${containerH}px;font-family:inherit;">
+      ${ribbonsHtml}
+      <div style="position:absolute;top:${markerTop}px;left:2px;width:36px;height:36px;background:${bgColor};border:1.5px solid ${borderColor};border-radius:12px;display:flex;align-items:center;justify-content:center;color:${iconColor};box-shadow:0 4px 10px -2px rgba(26,23,19,0.2);">${conf.svg}</div>
+      <div style="position:absolute;top:${markerTop + 36}px;left:50%;transform:translateX(-50%);width:1.5px;height:8px;background:${stemColor};"></div>
     </div>`,
-    anchor: new naver.maps.Point(20, 48)
+    anchor: new naver.maps.Point(20, markerTop + 48)
   };
 }
 
@@ -176,6 +194,7 @@ function openInfoWindow(target, cat, item) {
   const category = getCategory(item);
   const ll = getLatLng(item);
   const phone = item.TELNO || item.TELNO_INFO || item.MNGINST_TELNO || '';
+  const desc  = getDescription(item);
 
   const content = `
     <div class="iw">
@@ -184,6 +203,7 @@ function openInfoWindow(target, cat, item) {
         ${escapeHtml(conf.label)}${category ? ' · ' + escapeHtml(category) : ''}
       </div>
       <h3>${escapeHtml(name)}</h3>
+      ${desc ? `<p class="iw-desc">${escapeHtml(desc)}</p>` : ''}
       ${addr ? `<p>${LINE_ICONS.locpin}<span>${escapeHtml(addr)}</span></p>` : ''}
       ${phone ? `<p>${LINE_ICONS.phone}<span>${escapeHtml(phone)}</span></p>` : ''}
       <div class="iw-actions">

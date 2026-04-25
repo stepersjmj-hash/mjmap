@@ -16,9 +16,9 @@ const STATE = {
   sigun: localStorage.getItem('sigun') || '',  // SIGUN_NM 필터 (예: 성남시, 수원시)
   autoSigun: localStorage.getItem('autoSigun') !== 'false',  // 내 위치 기반 자동 시군 감지 (기본 on)
   favorites: JSON.parse(localStorage.getItem('favorites') || '{}'),
-  active: { money: false, gas: false, truck: false, street: false, fav: true },
-  markers: { money: [], gas: [], truck: [], street: [], fav: [] },
-  data: { money: [], gas: [], truck: [], street: [] },
+  active: { money: false, gas: false, truck: false, street: false, bluer: false, fav: true },
+  markers: { money: [], gas: [], truck: [], street: [], bluer: [], fav: [] },
+  data: { money: [], gas: [], truck: [], street: [], bluer: [] },
   map: null,
   myLocationMarker: null,
   currentInfoWindow: null,

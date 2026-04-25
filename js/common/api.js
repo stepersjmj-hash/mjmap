@@ -3,7 +3,8 @@
 // 의존: common/config.js (GG_API_BASE), common/state.js (STATE),
 //       gas/config.js (POLL_DIV_LABEL — getCategory 내부 참조),
 //       common/ui.js (showToast — 런타임 호출 시점엔 정의됨)
-// 기능별 loader(loadMoneyData / loadGasData)는 각 기능 api 에 위치
+// 기능별 loader(loadMoneyData / loadGasData / loadTruckData / loadStreetData / loadBluerData)
+// 는 각 기능 api 에 위치
 // ============================================================
 
 // 경기도 공공데이터 공통 호출기 — /api/gg/<service> 엔드포인트 사용
@@ -47,17 +48,17 @@ async function fetchGGApi(service, params = {}, pSize = STATE.pageSize) {
 }
 
 // ============================================================
-// 아이템 필드 추출 헬퍼 — 경기도 API 는 API 별로 필드명이 다름
-// (money, gas 모두 아래 공통 필드 셋으로 처리 가능하도록 설계됨)
+// 아이템 필드 추출 헬퍼 — API 별로 필드명이 다름
+// (모든 카테고리가 아래 공통 함수로 처리 가능하도록 설계)
 // ============================================================
 function getLatLng(item) {
   const lat = parseFloat(
-    item._LAT || // Opinet 에서 변환된 값 (우선)
+    item._LAT || // Opinet 에서 변환된 값 / 블루리본 정적 JSON (우선)
     item.REFINE_WGS84_LAT || item.LAT || item.LATITUDE || item.WGS84LAT ||
     item.YCRD || item.Y_CRDNT || item.MAP_Y || 0
   );
   const lng = parseFloat(
-    item._LNG || // Opinet 에서 변환된 값 (우선)
+    item._LNG ||
     item.REFINE_WGS84_LOGT || item.LNG || item.LON || item.LONGITUDE || item.WGS84LOGT ||
     item.XCRD || item.X_CRDNT || item.MAP_X || 0
   );
@@ -68,15 +69,18 @@ function getName(item) {
   return item.CMPNM_NM || item.FCLTY_NM || item.GAS_STN_NM || item.OS_NM ||
          item.BIZPLC_NM ||                    // 푸드트럭(Resrestrtfodtuck): 사업장명
          item.DSTNC_NM_INST_NM ||             // 특화거리(REGIONSPECLIZDSTNC): 거리명
+         item['제목'] ||                     // 블루리본(정적 JSON): 식당 이름 한글 키
          item.NM || item.BIZ_NM || '이름 없음';
 }
 
 function getAddr(item) {
   return item.REFINE_ROADNM_ADDR || item.REFINE_LOTNO_ADDR || item.ADDR ||
-         item.ROAD_ADDR || item.NEW_ADR || item.LOC || item.PLACE || '';
+         item.ROAD_ADDR || item.NEW_ADR || item.LOC || item.PLACE ||
+         item['주소'] ||                     // 블루리본(정적 JSON): 한글 키
+         '';
 }
 
-// 카테고리 문자열 — 주유소는 "브랜드 · 가격 · 거리" 조합, 지역화폐는 업종/시군 단일
+// 카테고리 문자열 — 카테고리별로 다른 포맷 (브랜드/가격/리본수 등)
 // POLL_DIV_LABEL 은 gas/config.js 에서 정의 (선행 로드 순서 보장)
 function getCategory(item) {
   // 주유소: POLL_DIV_CO 필드가 있으면 주유소 항목으로 판단
@@ -108,7 +112,21 @@ function getCategory(item) {
     if (cnt > 0) parts.push(`점포 ${cnt.toLocaleString()}개`);
     if (parts.length) return parts.join(' · ');
   }
+  // 블루리본(정적 JSON): 리본수 + 메뉴명 (예: '1리본 · 소갈비')
+  if (item['리본수'] || item['메뉴명']) {
+    const parts = [];
+    const ribbons = Number(item['리본수']);
+    if (ribbons > 0) parts.push(`${ribbons}리본`);
+    if (item['메뉴명']) parts.push(item['메뉴명']);
+    if (parts.length) return parts.join(' · ');
+  }
   return item.INDUTYPE_NM || item.CATEGORY || item.SIGUN_NM || '';
+}
+
+// 설명 텍스트 (정보창에 2줄 표시) — 카테고리별 설명 필드 통합
+//   블루리본: '설명' (한글 키), 특화거리: 'DSTNC_INTRD_INFO'
+function getDescription(item) {
+  return item['설명'] || item.DSTNC_INTRD_INFO || '';
 }
 
 function buildId(cat, item) {

@@ -142,6 +142,7 @@ async function loadAndRenderCategory(cat) {
     else if (cat === 'gas') items = await loadGasData();
     else if (cat === 'truck') items = await loadTruckData();
     else if (cat === 'street') items = await loadStreetData();
+    else if (cat === 'bluer') items = await loadBluerData();
 
     items = items || [];
     console.log(`[${cat}] API 응답 ${items.length}개 받음. 샘플:`, items[0]);
