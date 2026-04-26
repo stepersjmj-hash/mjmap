@@ -72,6 +72,7 @@ function openSettings() {
   document.getElementById('pageSizeSelect').value = STATE.pageSize;
   document.getElementById('sigunSelect').value = STATE.sigun;
   document.getElementById('autoSigunCheck').checked = STATE.autoSigun;
+  document.getElementById('bluerOnlyRibbonCheck').checked = STATE.bluerOnlyRibbon;
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
@@ -82,12 +83,14 @@ function saveSettings() {
   STATE.pageSize = parseInt(document.getElementById('pageSizeSelect').value);
   STATE.sigun = document.getElementById('sigunSelect').value;
   STATE.autoSigun = document.getElementById('autoSigunCheck').checked;
+  STATE.bluerOnlyRibbon = document.getElementById('bluerOnlyRibbonCheck').checked;
   STATE.prodcd = newProdcd;
   localStorage.setItem('autoSigun', STATE.autoSigun ? 'true' : 'false');
   localStorage.setItem('radius', STATE.radius);
   localStorage.setItem('pageSize', STATE.pageSize);
   localStorage.setItem('sigun', STATE.sigun);
   localStorage.setItem('prodcd', newProdcd);
+  localStorage.setItem('bluerOnlyRibbon', STATE.bluerOnlyRibbon ? 'true' : 'false');
   closeSettings();
   showToast('설정이 저장되었습니다.');
   reloadCurrentArea();
@@ -162,6 +165,14 @@ async function loadAndRenderCategory(cat) {
     else if (cat === 'bluer') items = await loadBluerData();
 
     items = items || [];
+
+    // 블루리본 — "리본 있는 항목만(1~3개)" 옵션이 켜져 있으면 리본수 >= 1 만 통과
+    if (cat === 'bluer' && STATE.bluerOnlyRibbon) {
+      const before = items.length;
+      items = items.filter(it => Number(it['리본수']) >= 1);
+      console.log(`[bluer] 리본 필터 ON: ${before} -> ${items.length}개`);
+    }
+
     // 비동기 fetch 동안 사용자가 다른 탭으로 바꿨으면 렌더링 취소 (race condition 방지)
     if (!STATE.active[cat]) {
       console.log(`[${cat}] 비활성화됨 — 렌더 취소 (다른 탭 선택)`);
