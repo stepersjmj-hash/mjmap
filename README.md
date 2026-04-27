@@ -6,7 +6,7 @@
 
 **데모**
 - https://stepersjmj-hash.github.io/mjmap/
-- https://stepersjmj.synology.me:28443/mjmap/ (NAS 미러)
+- https://stepersjmj.synology.me:28445/mjmap/ (NAS 미러)
 
 ---
 
