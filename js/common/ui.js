@@ -304,11 +304,19 @@ function openItemFromList(id, cat) {
   const ll = getLatLng(foundItem);
   if (!ll.lat || !ll.lng) return;
 
-  closePanel();
+  // 지도 이동 (블루리본은 패널을 상세 모드로 전환하므로 여기서 닫지 않음)
   const latlng = new naver.maps.LatLng(ll.lat, ll.lng);
   STATE.map.setCenter(latlng);
   if (STATE.map.getZoom() < 16) STATE.map.setZoom(16);
-  openInfoWindow(latlng, foundCat, foundItem);
+
+  if (foundCat === 'bluer' && typeof openBluerDetail === 'function') {
+    // InfoWindow 대신 우측 사이드 패널을 상세 모드로 표시
+    STATE._lastClickedItem = { cat: foundCat, item: foundItem, id };
+    openBluerDetail(foundItem);
+  } else {
+    closePanel();
+    openInfoWindow(latlng, foundCat, foundItem);
+  }
 }
 
 function toggleFavoriteFromList(id, cat, btn) {

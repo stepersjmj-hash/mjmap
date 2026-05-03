@@ -409,6 +409,138 @@
   .iw .iw-actions .fav-iw { background: transparent; color: var(--ink); border-color: var(--line); }
   .iw .iw-actions .fav-iw.active { background: var(--favorite); color: var(--panel); border-color: var(--favorite); }
 
+  /* InfoWindow 안의 "자세히 보기" 링크 (블루리본 전용) */
+  .iw .iw-detail-link {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: transparent;
+    border: 1px solid var(--bluer);
+    color: var(--bluer);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .iw .iw-detail-link:hover {
+    background: var(--bluer);
+    color: var(--panel);
+  }
+
+  /* 블루리본 상세 패널 — sidePanel 본문에 주입 (panel-body 안) */
+  .bluer-detail { padding: 4px 4px 24px; color: var(--ink); }
+  .bluer-detail .bd-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px 6px 6px;
+    margin-bottom: 14px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .bluer-detail .bd-back:hover { background: var(--bg); color: var(--ink); border-color: var(--ink); }
+  .bluer-detail .bd-cat {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bluer-detail .bd-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+  .bluer-detail .bd-name {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .bluer-detail .bd-ribbons { font-size: 14px; line-height: 1; }
+  .bluer-detail .bd-year {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--panel-2);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .bluer-detail .bd-desc {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 4px 0 18px;
+    white-space: pre-line;
+  }
+  .bluer-detail .bd-desc.bd-empty { color: var(--muted); font-style: italic; }
+  .bluer-detail .bd-row {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .bluer-detail .bd-row:last-of-type { border-bottom: 1px solid var(--line); }
+  .bluer-detail .bd-row-sub .bd-val { color: var(--muted); }
+  .bluer-detail .bd-label {
+    flex-shrink: 0;
+    width: 60px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding-top: 1px;
+  }
+  .bluer-detail .bd-val { flex: 1; color: var(--ink); word-break: keep-all; }
+  .bluer-detail .bd-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .bluer-detail .bd-btn {
+    flex: 1;
+    padding: 11px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .bluer-detail .bd-btn.bd-nav { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .bluer-detail .bd-btn.bd-fav.active { background: var(--favorite); color: var(--panel); border-color: var(--favorite); }
+  .bluer-detail .bd-extlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 9px 12px;
+    width: 100%;
+    justify-content: center;
+    background: transparent;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--bluer);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .bluer-detail .bd-extlink:hover { background: var(--bg); border-color: var(--bluer); }
+
   @media (max-width: 600px) {
     header h1 { font-size: 15px; }
     .filter-bar { padding: 8px; gap: 4px; }

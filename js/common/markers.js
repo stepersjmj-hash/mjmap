@@ -210,6 +210,7 @@ function openInfoWindow(target, cat, item) {
         <button class="fav-iw ${isFav?'active':''}" onclick="toggleFavoriteFromIW('${id.replace(/'/g, "\\'")}', '${cat}')">${LINE_ICONS.heart}<span>${isFav ? '해제' : '즐겨찾기'}</span></button>
         <button onclick="openNaverDirections(${ll.lat}, ${ll.lng}, '${escapeHtml(name).replace(/'/g, "\\'")}')">${LINE_ICONS.nav}<span>길찾기</span></button>
       </div>
+      ${cat === 'bluer' ? `<button class="iw-detail-link" onclick="openBluerDetail(STATE._lastClickedItem.item)">자세히 보기 →</button>` : ''}
     </div>
   `;
 
