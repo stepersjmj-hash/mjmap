@@ -110,6 +110,12 @@ function openBluerDetail(item) {
           <span class="bd-val">${escapeHtml(item._MATCHED_ADDR)}</span>
         </div>` : ''}
 
+      ${item['주차'] ? `
+        <div class="bd-row">
+          <span class="bd-label">🅿 주차</span>
+          <span class="bd-val">${escapeHtml(item['주차'])}</span>
+        </div>` : ''}
+
       <div class="bd-actions">
         <button class="bd-btn bd-fav ${isFav ? 'active' : ''}"
                 onclick="toggleFavoriteFromBluerDetail('${safeId}', this)">

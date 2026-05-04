@@ -17,7 +17,9 @@ async function loadBluerData() {
   if (_BLUER_CACHE) return _BLUER_CACHE;
 
   try {
-    const res = await fetch(BLUER_DATA_URL);
+    // cache:'no-cache' — 매번 If-Modified-Since 검증.
+    //   파일 안 바뀌면 304 로 빠르게 끝나고, 바뀌었으면 새로 받음 (디스크 캐시 누락 방지)
+    const res = await fetch(BLUER_DATA_URL, { cache: 'no-cache' });
     if (!res.ok) {
       // 404 = 아직 geocoding 안 함
       if (res.status === 404) {
