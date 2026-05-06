@@ -20,8 +20,12 @@
 // { wasOpen: bool, mode: 'list' | 'fav' | null }
 let _BLUER_DETAIL_PREV = null;
 
-function openBluerDetail(item) {
+function openBluerDetail(item, cat) {
   if (!item) return;
+  // 같은 click 사이클의 document fallback 이 panel 을 닫지 않도록 1회 suppress
+  if (typeof suppressOutsideClose === 'function') suppressOutsideClose();
+  // cat 미지정 시 메뉴명으로 자동 판단 (즐겨찾기·기존 호출 호환)
+  if (!cat) cat = (typeof isBluerCafe === 'function' && isBluerCafe(item)) ? 'bluer_cafe' : 'bluer';
   // 지도 위 InfoWindow 가 열려 있으면 닫기 (패널과 중복 방지)
   if (STATE.currentInfoWindow) {
     STATE.currentInfoWindow.close();
@@ -49,10 +53,10 @@ function openBluerDetail(item) {
   }
   panel.classList.add('bluer-detail-mode');
 
-  const id    = buildId('bluer', item);
+  const id    = buildId(cat, item);
   const isFav = !!STATE.favorites[id];
   const safeId = id.replace(/'/g, "\\'");
-  const conf  = ICONS.bluer;
+  const conf  = ICONS[cat] || ICONS.bluer;
   const name  = getName(item);
   const addr  = getAddr(item);
   const desc  = getDescription(item);
@@ -75,7 +79,7 @@ function openBluerDetail(item) {
   const naverMapUrl = `https://map.naver.com/p/search/${naverQuery}`;
 
   // 헤더는 sidePanel 의 panel-header 그대로 두되 제목만 바꿈
-  title.textContent = '블루리본 · 상세';
+  title.textContent = (conf && conf.label ? conf.label : '블루리본') + ' · 상세';
 
   body.innerHTML = `
     <div class="bluer-detail">
@@ -180,3 +184,4 @@ function closeBluerDetail() {
     closePanel();
   }
 }
+

@@ -17,9 +17,9 @@ const STATE = {
   autoSigun: localStorage.getItem('autoSigun') !== 'false',  // 내 위치 기반 자동 시군 감지 (기본 on)
   bluerOnlyRibbon: localStorage.getItem('bluerOnlyRibbon') === 'true',  // 블루리본 — 리본 있는 항목(1~3개)만 표시 (기본 off)
   favorites: JSON.parse(localStorage.getItem('favorites') || '{}'),
-  active: { money: false, gas: false, truck: false, street: false, bluer: true, fav: false },
-  markers: { money: [], gas: [], truck: [], street: [], bluer: [], fav: [] },
-  data: { money: [], gas: [], truck: [], street: [], bluer: [] },
+  active: { money: false, gas: false, truck: false, street: false, bluer: true, bluer_cafe: false, fav: false },
+  markers: { money: [], gas: [], truck: [], street: [], bluer: [], bluer_cafe: [], fav: [] },
+  data: { money: [], gas: [], truck: [], street: [], bluer: [], bluer_cafe: [] },
   map: null,
   myLocationMarker: null,
   currentInfoWindow: null,

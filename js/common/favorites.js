@@ -40,7 +40,10 @@ function renderFavorites() {
       title: getName(fav.item),
       zIndex: 500
     });
-    naver.maps.Event.addListener(marker, 'click', () => openInfoWindow(marker, fav.cat, fav.item));
+    naver.maps.Event.addListener(marker, 'click', () => {
+      if (typeof suppressOutsideClose === 'function') suppressOutsideClose();
+      openInfoWindow(marker, fav.cat, fav.item);
+    });
     STATE.markers.fav.push(marker);
   });
 }

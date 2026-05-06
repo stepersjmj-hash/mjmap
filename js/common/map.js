@@ -5,6 +5,11 @@
 //       common/ui.js (reloadCurrentArea — 런타임 호출 시점엔 정의됨)
 // ============================================================
 
+// 마커/클러스터/openBluerDetail 핸들러가 panel 을 여는 click 사이클에서,
+// document fallback handler 가 같은 click 으로 panel 을 닫지 않도록 1회 suppress.
+let _SUPPRESS_OUTSIDE_CLOSE = false;
+function suppressOutsideClose() { _SUPPRESS_OUTSIDE_CLOSE = true; }
+
 async function loadNaverScript() {
   window.navermap_authFailure = function() {
     console.error('[네이버지도] 인증 실패 — Client ID 오류 또는 Web 서비스 URL 미등록');
@@ -83,6 +88,23 @@ function initMap() {
       STATE.currentInfoWindow.close();
       STATE.currentInfoWindow = null;
     }
+    closePanel();
+  });
+
+  // Fallback — 일부 환경에서 naver maps 의 click 이벤트가 발동하지 않는 경우 대응.
+  //   panel/header/filter chip/모달/control-stack/InfoWindow 클릭은 예외,
+  //   그 외 (지도 타일, 마커 SVG 등) 클릭이면 panel 닫음.
+  document.addEventListener('click', function(ev) {
+    // 마커/클러스터/openBluerDetail 가 panel 을 여는 같은 click 사이클은 무시
+    if (_SUPPRESS_OUTSIDE_CLOSE) { _SUPPRESS_OUTSIDE_CLOSE = false; return; }
+    const panel = document.getElementById('sidePanel');
+    if (!panel || !panel.classList.contains('open')) return;
+    if (panel.contains(ev.target)) return;                       // panel 안 클릭 무시
+    if (ev.target.closest('header')) return;                      // 헤더 버튼 무시
+    if (ev.target.closest('.filter-bar')) return;                 // 필터 chip 무시
+    if (ev.target.closest('.modal-bg')) return;                   // 설정 모달 무시
+    if (ev.target.closest('.control-stack')) return;              // 우하단 컨트롤 버튼 무시
+    if (ev.target.closest('.iw')) return;                         // InfoWindow 본문 무시
     closePanel();
   });
 

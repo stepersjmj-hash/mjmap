@@ -35,7 +35,7 @@ console.log(`[proxy] ${_isLocalDev ? '🏠 로컬' : '🌐 NAS'} 프록시 사�
 // ─── 데이터 카테고리 목록 ─────────────────────────────────────
 // fav(즐겨찾기)는 파생 카테고리이므로 별도 처리. 여기는 원본 데이터 카테고리만.
 // 새 카테고리 추가 시 이 배열 + STATE.active/markers/data + ICONS 등록만 하면 됨.
-const DATA_CATEGORIES = ['money', 'gas', 'truck', 'street', 'bluer'];
+const DATA_CATEGORIES = ['money', 'gas', 'truck', 'street', 'bluer', 'bluer_cafe'];
 
 // 시군·반경 필터를 모두 무시하고 항상 전체 데이터를 표시하는 카테고리 목록.
 // (데이터 양이 적어 자르면 사용자가 '데이터 없음' 으로 오해할 수 있는 카테고리)

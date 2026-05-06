@@ -162,15 +162,24 @@ async function loadAndRenderCategory(cat) {
     else if (cat === 'gas') items = await loadGasData();
     else if (cat === 'truck') items = await loadTruckData();
     else if (cat === 'street') items = await loadStreetData();
-    else if (cat === 'bluer') items = await loadBluerData();
+    else if (cat === 'bluer' || cat === 'bluer_cafe') items = await loadBluerData();
 
     items = items || [];
 
-    // 블루리본 — "리본 있는 항목만(1~3개)" 옵션이 켜져 있으면 리본수 >= 1 만 통과
-    if (cat === 'bluer' && STATE.bluerOnlyRibbon) {
+    // 블루리본 식당/카페 — 메뉴명 기반 분기 (isBluerCafe 는 bluer/config.js 정의)
+    //   bluer       = 카페가 아닌 항목 (음식점)
+    //   bluer_cafe  = 카페·디저트 항목
+    if (cat === 'bluer' && typeof isBluerCafe === 'function') {
+      items = items.filter(it => !isBluerCafe(it));
+    } else if (cat === 'bluer_cafe' && typeof isBluerCafe === 'function') {
+      items = items.filter(it => isBluerCafe(it));
+    }
+
+    // 블루리본 — "리본 있는 항목만(1~3개)" 옵션이 켜져 있으면 리본수 >= 1 만 통과 (식당/카페 둘 다 적용)
+    if ((cat === 'bluer' || cat === 'bluer_cafe') && STATE.bluerOnlyRibbon) {
       const before = items.length;
       items = items.filter(it => Number(it['리본수']) >= 1);
-      console.log(`[bluer] 리본 필터 ON: ${before} -> ${items.length}개`);
+      console.log(`[${cat}] 리본 필터 ON: ${before} -> ${items.length}개`);
     }
 
     // 비동기 fetch 동안 사용자가 다른 탭으로 바꿨으면 렌더링 취소 (race condition 방지)
@@ -309,10 +318,10 @@ function openItemFromList(id, cat) {
   STATE.map.setCenter(latlng);
   if (STATE.map.getZoom() < 16) STATE.map.setZoom(16);
 
-  if (foundCat === 'bluer' && typeof openBluerDetail === 'function') {
+  if ((foundCat === 'bluer' || foundCat === 'bluer_cafe') && typeof openBluerDetail === 'function') {
     // InfoWindow 대신 우측 사이드 패널을 상세 모드로 표시
     STATE._lastClickedItem = { cat: foundCat, item: foundItem, id };
-    openBluerDetail(foundItem);
+    openBluerDetail(foundItem, foundCat);
   } else {
     closePanel();
     openInfoWindow(latlng, foundCat, foundItem);

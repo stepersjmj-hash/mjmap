@@ -153,7 +153,10 @@ function renderMarkers(cat, items) {
         title: rank ? `${rank}위 최저가 · ${getName(item)}` : getName(item),
         ...(zIndex !== undefined ? { zIndex } : {})
       });
-      naver.maps.Event.addListener(marker, 'click', () => openInfoWindow(marker, cat, item));
+      naver.maps.Event.addListener(marker, 'click', () => {
+        if (typeof suppressOutsideClose === 'function') suppressOutsideClose();
+        openInfoWindow(marker, cat, item);
+      });
       STATE.markers[cat].push(marker);
     } else {
       // 클러스터 마커
@@ -164,7 +167,10 @@ function renderMarkers(cat, items) {
         title: `${ICONS[cat].label} ${group.items.length}건`,
         zIndex: 200
       });
-      naver.maps.Event.addListener(marker, 'click', () => openClusterPanel(cat, group));
+      naver.maps.Event.addListener(marker, 'click', () => {
+        if (typeof suppressOutsideClose === 'function') suppressOutsideClose();
+        openClusterPanel(cat, group);
+      });
       STATE.markers[cat].push(marker);
     }
   });
@@ -210,7 +216,7 @@ function openInfoWindow(target, cat, item) {
         <button class="fav-iw ${isFav?'active':''}" onclick="toggleFavoriteFromIW('${id.replace(/'/g, "\\'")}', '${cat}')">${LINE_ICONS.heart}<span>${isFav ? '해제' : '즐겨찾기'}</span></button>
         <button onclick="openNaverDirections(${ll.lat}, ${ll.lng}, '${escapeHtml(name).replace(/'/g, "\\'")}')">${LINE_ICONS.nav}<span>길찾기</span></button>
       </div>
-      ${cat === 'bluer' ? `<button class="iw-detail-link" onclick="openBluerDetail(STATE._lastClickedItem.item)">자세히 보기 →</button>` : ''}
+      ${(cat === 'bluer' || cat === 'bluer_cafe') ? `<button class="iw-detail-link" onclick="openBluerDetail(STATE._lastClickedItem.item, '${cat}')">자세히 보기 →</button>` : ''}
     </div>
   `;
 
