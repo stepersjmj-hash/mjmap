@@ -14,6 +14,7 @@
     --street: #5C8C8A;       /* teal */
     --bluer: #6D8EA5;        /* dusty blue */
     --bluer-cafe: #B07A56;   /* 코코아 브라운 — 블루리본 카페 */
+    --large-cafe: #7A6E5C;   /* 웜 스톤 브라운 — 대형카페 */
     --favorite: #9B6A7C;     /* dusty rose */
     --shadow: 0 8px 24px -10px rgba(26,23,19,0.18);
     --shadow-sm: 0 2px 8px -2px rgba(26,23,19,0.12);
@@ -131,6 +132,7 @@
   .chip[data-cat="street"] .tint { background: var(--street); }
   .chip[data-cat="bluer"]  .tint { background: var(--bluer); }
   .chip[data-cat="bluer_cafe"] .tint { background: var(--bluer-cafe); }
+  .chip[data-cat="large_cafe"] .tint { background: var(--large-cafe); }
   .chip[data-cat="fav"]    .tint { background: var(--favorite); }
   .chip:hover { color: var(--ink); border-color: var(--ink); }
   .chip.active { background: var(--ink); color: var(--panel); border-color: var(--ink); }
@@ -238,6 +240,8 @@
   .badge.truck  { background: var(--truck); }
   .badge.street { background: var(--street); }
   .badge.bluer  { background: var(--bluer); }
+  .badge.bluer_cafe { background: var(--bluer-cafe); }
+  .badge.large_cafe { background: var(--large-cafe); }
   .badge.fav    { background: var(--favorite); }
 
   .fav-btn {
@@ -428,6 +432,58 @@
   .iw .iw-detail-link:hover {
     background: var(--bluer);
     color: var(--panel);
+  }
+  /* 대형카페 InfoWindow "자세히 보기" — 색상 오버라이드 */
+  .iw .iw-detail-link.iw-detail-link-cafe {
+    border-color: var(--large-cafe);
+    color: var(--large-cafe);
+  }
+  .iw .iw-detail-link.iw-detail-link-cafe:hover {
+    background: var(--large-cafe);
+    color: var(--panel);
+  }
+
+  /* 대형카페 상세 패널 — 블루리본 detail 컨테이너(.bluer-detail) 위에 추가 요소 */
+  .bluer-detail .bd-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    background: var(--panel-2);
+  }
+  .bluer-detail .bd-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .bluer-detail .bd-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin: -2px 0 14px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .bluer-detail .bd-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .bluer-detail .bd-chip {
+    display: inline-block;
+    padding: 3px 8px;
+    background: var(--panel-2);
+    border-radius: 999px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .bluer-detail.large-cafe-detail .bd-extlink {
+    color: var(--large-cafe);
+  }
+  .bluer-detail.large-cafe-detail .bd-extlink:hover {
+    border-color: var(--large-cafe);
   }
 
   /* 블루리본 상세 패널 — sidePanel 본문에 주입 (panel-body 안) */

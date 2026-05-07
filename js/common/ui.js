@@ -163,6 +163,7 @@ async function loadAndRenderCategory(cat) {
     else if (cat === 'truck') items = await loadTruckData();
     else if (cat === 'street') items = await loadStreetData();
     else if (cat === 'bluer' || cat === 'bluer_cafe') items = await loadBluerData();
+    else if (cat === 'large_cafe') items = await loadLargeCafeData();
 
     items = items || [];
 
@@ -322,6 +323,9 @@ function openItemFromList(id, cat) {
     // InfoWindow 대신 우측 사이드 패널을 상세 모드로 표시
     STATE._lastClickedItem = { cat: foundCat, item: foundItem, id };
     openBluerDetail(foundItem, foundCat);
+  } else if (foundCat === 'large_cafe' && typeof openLargeCafeDetail === 'function') {
+    STATE._lastClickedItem = { cat: foundCat, item: foundItem, id };
+    openLargeCafeDetail(foundItem);
   } else {
     closePanel();
     openInfoWindow(latlng, foundCat, foundItem);

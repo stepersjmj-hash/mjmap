@@ -217,6 +217,7 @@ function openInfoWindow(target, cat, item) {
         <button onclick="openNaverDirections(${ll.lat}, ${ll.lng}, '${escapeHtml(name).replace(/'/g, "\\'")}')">${LINE_ICONS.nav}<span>길찾기</span></button>
       </div>
       ${(cat === 'bluer' || cat === 'bluer_cafe') ? `<button class="iw-detail-link" onclick="openBluerDetail(STATE._lastClickedItem.item, '${cat}')">자세히 보기 →</button>` : ''}
+      ${cat === 'large_cafe' ? `<button class="iw-detail-link iw-detail-link-cafe" onclick="openLargeCafeDetail(STATE._lastClickedItem.item)">자세히 보기 →</button>` : ''}
     </div>
   `;
 
