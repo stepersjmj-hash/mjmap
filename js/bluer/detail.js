@@ -59,11 +59,32 @@ function openBluerDetail(item, cat) {
   const conf  = ICONS[cat] || ICONS.bluer;
   const name  = getName(item);
   const addr  = getAddr(item);
-  const desc  = getDescription(item);
+  // 설명: 신규 AI 생성 description 이 있으면 우선, 없으면 기존 '설명' 사용
+  const desc        = item.description || getDescription(item) || '';
+  const subtitle    = item.subtitle    || '';
+  const parking     = item.parking     || item['주차'] || '';
+  const mainMenus   = Array.isArray(item.mainMenus)    ? item.mainMenus    : [];
+  const services    = Array.isArray(item.services)     ? item.services     : [];
+  const childOptions= Array.isArray(item.childOptions) ? item.childOptions : [];
+  const seatOptions = Array.isArray(item.seatOptions)  ? item.seatOptions  : [];
   const menu  = item['메뉴명'] || '';
   const year  = item['연도'] || '';
   const ribbons = Math.min(Math.max(Number(item['리본수']) || 0, 0), 3);
   const ll    = getLatLng(item);
+
+  // 칩 행 HTML — 빈 배열이면 자동 숨김
+  const menuHtml = mainMenus.length
+    ? `<div class="bd-row"><span class="bd-label">메뉴</span><span class="bd-val bd-chips">${mainMenus.map(m => `<span class="bd-chip">${escapeHtml(m)}</span>`).join('')}</span></div>`
+    : '';
+  const svcHtml = services.length
+    ? `<div class="bd-row"><span class="bd-label">서비스</span><span class="bd-val bd-chips">${services.map(s => `<span class="bd-chip">${escapeHtml(s)}</span>`).join('')}</span></div>`
+    : '';
+  const childHtml = childOptions.length
+    ? `<div class="bd-row"><span class="bd-label">아이동반</span><span class="bd-val bd-chips">${childOptions.map(c => `<span class="bd-chip">${escapeHtml(c)}</span>`).join('')}</span></div>`
+    : '';
+  const seatHtml = seatOptions.length
+    ? `<div class="bd-row"><span class="bd-label">좌석</span><span class="bd-val bd-chips">${seatOptions.map(s => `<span class="bd-chip">${escapeHtml(s)}</span>`).join('')}</span></div>`
+    : '';
 
   // 리본 시각화 (1~3개 채워짐 + 빈 자리)
   let ribbonsHtml = '';
@@ -100,6 +121,8 @@ function openBluerDetail(item, cat) {
 
       ${year ? `<div class="bd-year">${escapeHtml(year)}</div>` : ''}
 
+      ${subtitle ? `<p class="bd-subtitle">${escapeHtml(subtitle)}</p>` : ''}
+
       ${desc ? `<p class="bd-desc">${escapeHtml(desc)}</p>` : `<p class="bd-desc bd-empty">설명이 등록되어 있지 않습니다.</p>`}
 
       ${addr ? `
@@ -114,11 +137,16 @@ function openBluerDetail(item, cat) {
           <span class="bd-val">${escapeHtml(item._MATCHED_ADDR)}</span>
         </div>` : ''}
 
-      ${item['주차'] ? `
+      ${parking ? `
         <div class="bd-row">
           <span class="bd-label">🅿 주차</span>
-          <span class="bd-val">${escapeHtml(item['주차'])}</span>
+          <span class="bd-val">${escapeHtml(parking)}</span>
         </div>` : ''}
+
+      ${menuHtml}
+      ${svcHtml}
+      ${childHtml}
+      ${seatHtml}
 
       <div class="bd-actions">
         <button class="bd-btn bd-fav ${isFav ? 'active' : ''}"
