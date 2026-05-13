@@ -129,6 +129,22 @@ function getDescription(item) {
   return item['설명'] || item.DSTNC_INTRD_INFO || '';
 }
 
+// 오늘(사용자 로컬) 휴무 여부 — hours.weekly[오늘 한글 요일]이 누락/빈문자/"휴무"이면 true
+// hours 자체가 없으면 false (정보 없음을 휴무로 단정하지 않음)
+// 사용처: 마커 색상(회색 처리), InfoWindow 휴무 안내
+function isClosedToday(item) {
+  const hours = item && item.hours;
+  if (!hours || typeof hours !== 'object') return false;
+  const weekly = hours.weekly;
+  if (!weekly || typeof weekly !== 'object') return false;
+  const DAY_KO = ['일','월','화','수','목','금','토'];
+  const todayKey = DAY_KO[new Date().getDay()];
+  const v = weekly[todayKey];
+  if (v == null) return true;
+  const trimmed = String(v).trim();
+  return trimmed === '' || trimmed === '휴무';
+}
+
 function buildId(cat, item) {
   const ll = getLatLng(item);
   return `${cat}::${getName(item)}::${ll.lat.toFixed(5)}_${ll.lng.toFixed(5)}`;

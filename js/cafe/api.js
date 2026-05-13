@@ -5,10 +5,12 @@
 //
 // 원본 JSON 형식:
 //   { source, collectedAt, pageRange, count, cafes: [ ... ] }
-//   각 cafe: id, name, address, jibunAddress, phone, rating, reviewCount,
-//            category, hours, lat, lng, detailUrl, description, parking,
+//   각 cafe: id, name, address, jibunAddress, phone, category,
+//            hours{status,weekly{월..일}}, lat, lng, description, parking,
 //            services[], subtitle, mainMenus[], seatOptions[], childOptions[],
+//            tags[], parkingInfo{texts,summary?,has_ai_mate_data},
 //            questions[], thumbnailUrl
+//   ※ 이전 스키마의 rating/reviewCount/detailUrl 은 제거됨 (cafe/detail.js 에서 fallback)
 //
 // 공통 헬퍼(getLatLng/getName/getAddr/getCategory/getDescription)와의 호환을 위해
 // 로딩 직후 각 항목에 alias 필드를 주입한다:
@@ -19,7 +21,7 @@
 //   INDUTYPE_NM ← category
 //   TELNO     ← phone
 //   주차      ← parking (블루리본 detail 패턴 호환)
-// 원본 필드는 보존 — detail 패널이 추가 정보(메뉴/좌석/시간/평점 등) 표시 용도로 직접 사용.
+// 원본 필드는 보존 — detail 패널이 추가 정보(메뉴/좌석/시간/태그 등) 표시 용도로 직접 사용.
 // ============================================================
 
 // 메모리 캐시 — 같은 세션에서 두 번째 클릭부터는 즉시 반환

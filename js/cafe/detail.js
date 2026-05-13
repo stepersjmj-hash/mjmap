@@ -65,18 +65,21 @@ function openLargeCafeDetail(item) {
   const subtitle    = item.subtitle    || '';
   const description = item.description || '';
   const category    = item.category    || '';
-  const hours       = item.hours       || '';
+  const hours       = (item.hours && typeof item.hours === 'object') ? item.hours : null;
   const phone       = item.phone       || item.TELNO || '';
   const parking     = item.parking     || item['주차'] || '';
   const jibunAddr   = item.jibunAddress || '';
   const rating      = Number(item.rating) || 0;
   const reviewCount = Number(item.reviewCount) || 0;
-  const mainMenus   = Array.isArray(item.mainMenus)   ? item.mainMenus   : [];
-  const seatOptions = Array.isArray(item.seatOptions) ? item.seatOptions : [];
+  const mainMenus   = Array.isArray(item.mainMenus)    ? item.mainMenus    : [];
+  const seatOptions = Array.isArray(item.seatOptions)  ? item.seatOptions  : [];
+  const services    = Array.isArray(item.services)     ? item.services     : [];
+  const childOptions= Array.isArray(item.childOptions) ? item.childOptions : [];
+  const tags        = Array.isArray(item.tags)         ? item.tags         : [];
   const detailUrl   = item.detailUrl   || '';
   const thumbUrl    = item.thumbnailUrl || '';
 
-  // 평점 + 리뷰 시각화
+  // 평점 + 리뷰 시각화 (새 스키마에는 rating/reviewCount 없음 — 0이면 자동 숨김)
   let ratingHtml = '';
   if (rating > 0 || reviewCount > 0) {
     const parts = [];
@@ -97,13 +100,99 @@ function openLargeCafeDetail(item) {
     ? `<div class="bd-thumb"><img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(name)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
     : '';
 
-  // 메뉴 / 좌석 옵션 — 칩 형태로 표시
+  // 메뉴 / 좌석 / 서비스 / 아이동반 / 태그 — 칩 형태로 표시
   const menuHtml = mainMenus.length
     ? `<div class="bd-row"><span class="bd-label">메뉴</span><span class="bd-val bd-chips">${mainMenus.map(m => `<span class="bd-chip">${escapeHtml(m)}</span>`).join('')}</span></div>`
     : '';
   const seatHtml = seatOptions.length
     ? `<div class="bd-row"><span class="bd-label">좌석</span><span class="bd-val bd-chips">${seatOptions.map(s => `<span class="bd-chip">${escapeHtml(s)}</span>`).join('')}</span></div>`
     : '';
+  const svcHtml = services.length
+    ? `<div class="bd-row"><span class="bd-label">서비스</span><span class="bd-val bd-chips">${services.map(s => `<span class="bd-chip">${escapeHtml(s)}</span>`).join('')}</span></div>`
+    : '';
+  const childHtml = childOptions.length
+    ? `<div class="bd-row"><span class="bd-label">아이동반</span><span class="bd-val bd-chips">${childOptions.map(c => `<span class="bd-chip">${escapeHtml(c)}</span>`).join('')}</span></div>`
+    : '';
+  const tagsHtml = tags.length
+    ? `<div class="bd-row"><span class="bd-label">🏷 태그</span><span class="bd-val bd-chips">${tags.map(t => `<span class="bd-chip">${escapeHtml(t)}</span>`).join('')}</span></div>`
+    : '';
+
+  // 전화 — tel: 링크 (블루리본과 동일)
+  const phoneTel = phone.replace(/[^\d+\-]/g, '');
+  const phoneHtml = phone ? `
+    <div class="bd-row">
+      <span class="bd-label">📞 전화</span>
+      <span class="bd-val"><a class="bd-tel" href="tel:${escapeHtml(phoneTel)}">${escapeHtml(phone)}</a></span>
+    </div>` : '';
+
+  // 영업시간 — 누락=휴무, 오늘 강조, status 는 weekly+현재시각으로 동적 계산 (블루리본과 동일)
+  const DAYS = ['월','화','수','목','금','토','일'];
+  const _DAY_KO = ['일','월','화','수','목','금','토'];
+  const _now = new Date();
+  const _todayKey = _DAY_KO[_now.getDay()];
+  let hoursHtml = '';
+  if (hours) {
+    const weekly = (hours.weekly && typeof hours.weekly === 'object') ? hours.weekly : null;
+    const parseRange = (s) => {
+      if (!s || typeof s !== 'string') return null;
+      const t = s.trim();
+      if (t === '' || t === '휴무') return null;
+      const m = t.match(/^(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})$/);
+      if (!m) return null;
+      const startMin = (+m[1])*60 + (+m[2]);
+      let endMin = (+m[3])*60 + (+m[4]);
+      // 종료가 시작보다 이르면 자정 넘김으로 해석 (예: "10:30 ~ 01:00" → 다음날 01:00)
+      // 블루리본 등 "25:00" 표기는 이미 endMin >= 1440 이라 영향 없음
+      if (endMin <= startMin && endMin < 1440) endMin += 1440;
+      return { startMin, endMin };
+    };
+    const fmtMin = (min) => {
+      if (min === 1440) return '24:00';
+      if (min > 1440) {
+        const n = min - 1440;
+        return `익일 ${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
+      }
+      return `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+    };
+    let liveStatus = '';
+    if (weekly) {
+      const nowMin = _now.getHours()*60 + _now.getMinutes();
+      const yestKey = _DAY_KO[(_now.getDay()+6) % 7];
+      const yestRange = parseRange(weekly[yestKey]);
+      if (yestRange && yestRange.endMin > 1440 && nowMin < (yestRange.endMin - 1440)) {
+        liveStatus = `영업 중 ${fmtMin(yestRange.endMin - 1440)} 까지`;
+      } else {
+        const todayVal = weekly[_todayKey];
+        if (todayVal == null || String(todayVal).trim() === '' || todayVal === '휴무') {
+          liveStatus = '휴무일';
+        } else {
+          const r = parseRange(todayVal);
+          if (!r) liveStatus = String(todayVal);
+          else if (r.startMin === 0 && r.endMin === 1440) liveStatus = '24시간 영업';
+          else if (nowMin < r.startMin)  liveStatus = `영업 전 ${fmtMin(r.startMin)} 오픈`;
+          else if (nowMin < r.endMin)    liveStatus = `영업 중 ${fmtMin(r.endMin)} 까지`;
+          else                           liveStatus = '영업 종료';
+        }
+      }
+    }
+    const weeklyRows = weekly
+      ? DAYS.map(d => {
+          const raw = (weekly[d] != null && String(weekly[d]).trim() !== '') ? String(weekly[d]) : '휴무';
+          const todayCls = (d === _todayKey) ? ' bd-hours-today' : '';
+          return `<span class="bd-hours-day${todayCls}">${d}</span><span class="bd-hours-time${todayCls}">${escapeHtml(raw)}</span>`;
+        }).join('')
+      : '';
+    if (liveStatus || weeklyRows) {
+      hoursHtml = `
+        <div class="bd-row">
+          <span class="bd-label">⏰ 영업</span>
+          <span class="bd-val">
+            ${liveStatus ? `<div class="bd-hours-status">${escapeHtml(liveStatus)}</div>` : ''}
+            ${weeklyRows ? `<div class="bd-hours-weekly">${weeklyRows}</div>` : ''}
+          </span>
+        </div>`;
+    }
+  }
 
   title.textContent = '대형카페 · 상세';
 
@@ -144,17 +233,8 @@ function openLargeCafeDetail(item) {
           <span class="bd-val">${escapeHtml(jibunAddr)}</span>
         </div>` : ''}
 
-      ${phone ? `
-        <div class="bd-row">
-          <span class="bd-label">📞 전화</span>
-          <span class="bd-val">${escapeHtml(phone)}</span>
-        </div>` : ''}
-
-      ${hours ? `
-        <div class="bd-row">
-          <span class="bd-label">⏰ 시간</span>
-          <span class="bd-val">${escapeHtml(hours)}</span>
-        </div>` : ''}
+      ${phoneHtml}
+      ${hoursHtml}
 
       ${parking ? `
         <div class="bd-row">
@@ -164,6 +244,9 @@ function openLargeCafeDetail(item) {
 
       ${menuHtml}
       ${seatHtml}
+      ${svcHtml}
+      ${childHtml}
+      ${tagsHtml}
 
       <div class="bd-actions">
         <button class="bd-btn bd-fav ${isFav ? 'active' : ''}"
@@ -214,6 +297,9 @@ function toggleFavoriteFromLargeCafeDetail(id, btn) {
 function closeLargeCafeDetail() {
   const panel = document.getElementById('sidePanel');
   panel.classList.remove('bluer-detail-mode');
+
+  // 상세 닫기 시 마커 활성화 해제
+  if (typeof clearActiveMarker === 'function') clearActiveMarker();
 
   const prev = _LARGE_CAFE_DETAIL_PREV;
   _LARGE_CAFE_DETAIL_PREV = null;

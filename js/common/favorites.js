@@ -36,13 +36,16 @@ function renderFavorites() {
     const marker = new naver.maps.Marker({
       position: new naver.maps.LatLng(ll.lat, ll.lng),
       map: STATE.map,
-      icon: makeFavoriteMarkerIcon(fav.cat),
+      icon: makeFavoriteMarkerIcon(fav.cat, fav.item),
       title: getName(fav.item),
       zIndex: 500
     });
     naver.maps.Event.addListener(marker, 'click', () => {
       if (typeof suppressOutsideClose === 'function') suppressOutsideClose();
       openInfoWindow(marker, fav.cat, fav.item);
+      // 즐겨찾기 레이어 마커는 fav-layer 컨텍스트로 활성화
+      // (openInfoWindow 내부에서도 target=marker 일 때 활성화하지만, fav-layer 임을 명시하기 위해 재호출)
+      setActiveMarker(marker, { cat: 'fav-layer', favCat: fav.cat, item: fav.item, isFav: true });
     });
     STATE.markers.fav.push(marker);
   });

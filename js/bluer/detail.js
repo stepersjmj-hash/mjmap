@@ -63,10 +63,14 @@ function openBluerDetail(item, cat) {
   const desc        = item.description || getDescription(item) || '';
   const subtitle    = item.subtitle    || '';
   const parking     = item.parking     || item['주차'] || '';
+  const phone       = item.phone       || '';
+  const homepageUrl = item.homepageUrl || '';
+  const hours       = (item.hours && typeof item.hours === 'object') ? item.hours : null;
   const mainMenus   = Array.isArray(item.mainMenus)    ? item.mainMenus    : [];
   const services    = Array.isArray(item.services)     ? item.services     : [];
   const childOptions= Array.isArray(item.childOptions) ? item.childOptions : [];
   const seatOptions = Array.isArray(item.seatOptions)  ? item.seatOptions  : [];
+  const tags        = Array.isArray(item.tags)         ? item.tags         : [];
   const menu  = item['메뉴명'] || '';
   const year  = item['연도'] || '';
   const ribbons = Math.min(Math.max(Number(item['리본수']) || 0, 0), 3);
@@ -85,6 +89,102 @@ function openBluerDetail(item, cat) {
   const seatHtml = seatOptions.length
     ? `<div class="bd-row"><span class="bd-label">좌석</span><span class="bd-val bd-chips">${seatOptions.map(s => `<span class="bd-chip">${escapeHtml(s)}</span>`).join('')}</span></div>`
     : '';
+  const tagsHtml = tags.length
+    ? `<div class="bd-row"><span class="bd-label">🏷 태그</span><span class="bd-val bd-chips">${tags.map(t => `<span class="bd-chip">${escapeHtml(t)}</span>`).join('')}</span></div>`
+    : '';
+
+  // 전화 — tel: 링크 (숫자/+/- 만 추출)
+  const phoneTel = phone.replace(/[^\d+\-]/g, '');
+  const phoneHtml = phone ? `
+    <div class="bd-row">
+      <span class="bd-label">📞 전화</span>
+      <span class="bd-val"><a class="bd-tel" href="tel:${escapeHtml(phoneTel)}">${escapeHtml(phone)}</a></span>
+    </div>` : '';
+
+  // 홈페이지 — 외부 링크
+  const homepageHtml = homepageUrl ? `
+    <div class="bd-row">
+      <span class="bd-label">🌐 홈피</span>
+      <span class="bd-val"><a class="bd-link-inline" href="${escapeHtml(homepageUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(homepageUrl)}</a></span>
+    </div>` : '';
+
+  // 영업시간 — 누락=휴무, 오늘 강조, status 는 weekly+현재시각으로 동적 계산
+  const DAYS = ['월','화','수','목','금','토','일'];
+  // JS getDay(): 0=일,1=월,...,6=토 → 한글 매핑
+  const _DAY_KO = ['일','월','화','수','목','금','토'];
+  const _now = new Date();
+  const _todayKey = _DAY_KO[_now.getDay()];
+  let hoursHtml = '';
+  if (hours) {
+    const weekly = (hours.weekly && typeof hours.weekly === 'object') ? hours.weekly : null;
+
+    // "HH:MM ~ HH:MM" 파싱 (시간 24+ 허용 — 자정 넘김)
+    const parseRange = (s) => {
+      if (!s || typeof s !== 'string') return null;
+      const t = s.trim();
+      if (t === '' || t === '휴무') return null;
+      const m = t.match(/^(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})$/);
+      if (!m) return null;
+      const startMin = (+m[1])*60 + (+m[2]);
+      let endMin = (+m[3])*60 + (+m[4]);
+      // 종료가 시작보다 이르면 자정 넘김으로 해석 (예: "10:30 ~ 01:00" → 다음날 01:00)
+      // "25:00" 표기는 이미 endMin >= 1440 이라 영향 없음
+      if (endMin <= startMin && endMin < 1440) endMin += 1440;
+      return { startMin, endMin };
+    };
+    const fmtMin = (min) => {
+      if (min === 1440) return '24:00';
+      if (min > 1440) {
+        const n = min - 1440;
+        return `익일 ${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
+      }
+      return `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+    };
+
+    // 실시간 status 계산
+    let liveStatus = '';
+    if (weekly) {
+      const nowMin = _now.getHours()*60 + _now.getMinutes();
+      const yestKey = _DAY_KO[(_now.getDay()+6) % 7];
+      const yestRange = parseRange(weekly[yestKey]);
+      // 어제 영업이 자정을 넘겼고, 지금이 그 연장 시간대인가
+      if (yestRange && yestRange.endMin > 1440 && nowMin < (yestRange.endMin - 1440)) {
+        liveStatus = `영업 중 ${fmtMin(yestRange.endMin - 1440)} 까지`;
+      } else {
+        const todayVal = weekly[_todayKey];
+        if (todayVal == null || String(todayVal).trim() === '' || todayVal === '휴무') {
+          liveStatus = '휴무일';
+        } else {
+          const r = parseRange(todayVal);
+          if (!r) liveStatus = String(todayVal);
+          else if (r.startMin === 0 && r.endMin === 1440) liveStatus = '24시간 영업';
+          else if (nowMin < r.startMin)  liveStatus = `영업 전 ${fmtMin(r.startMin)} 오픈`;
+          else if (nowMin < r.endMin)    liveStatus = `영업 중 ${fmtMin(r.endMin)} 까지`;
+          else                           liveStatus = '영업 종료';
+        }
+      }
+    }
+
+    // 요일별 표 — 누락 요일은 휴무, 오늘 강조
+    const weeklyRows = weekly
+      ? DAYS.map(d => {
+          const raw = (weekly[d] != null && String(weekly[d]).trim() !== '') ? String(weekly[d]) : '휴무';
+          const todayCls = (d === _todayKey) ? ' bd-hours-today' : '';
+          return `<span class="bd-hours-day${todayCls}">${d}</span><span class="bd-hours-time${todayCls}">${escapeHtml(raw)}</span>`;
+        }).join('')
+      : '';
+
+    if (liveStatus || weeklyRows) {
+      hoursHtml = `
+        <div class="bd-row">
+          <span class="bd-label">⏰ 영업</span>
+          <span class="bd-val">
+            ${liveStatus ? `<div class="bd-hours-status">${escapeHtml(liveStatus)}</div>` : ''}
+            ${weeklyRows ? `<div class="bd-hours-weekly">${weeklyRows}</div>` : ''}
+          </span>
+        </div>`;
+    }
+  }
 
   // 리본 시각화 (1~3개 채워짐 + 빈 자리)
   let ribbonsHtml = '';
@@ -137,16 +237,22 @@ function openBluerDetail(item, cat) {
           <span class="bd-val">${escapeHtml(item._MATCHED_ADDR)}</span>
         </div>` : ''}
 
+      ${phoneHtml}
+      ${hoursHtml}
+
       ${parking ? `
         <div class="bd-row">
           <span class="bd-label">🅿 주차</span>
           <span class="bd-val">${escapeHtml(parking)}</span>
         </div>` : ''}
 
+      ${homepageHtml}
+
       ${menuHtml}
       ${svcHtml}
       ${childHtml}
       ${seatHtml}
+      ${tagsHtml}
 
       <div class="bd-actions">
         <button class="bd-btn bd-fav ${isFav ? 'active' : ''}"
@@ -202,6 +308,9 @@ function closeBluerDetail() {
   const panel = document.getElementById('sidePanel');
   panel.classList.remove('bluer-detail-mode');
 
+  // 상세 닫기 시 마커 활성화 해제
+  if (typeof clearActiveMarker === 'function') clearActiveMarker();
+
   const prev = _BLUER_DETAIL_PREV;
   _BLUER_DETAIL_PREV = null;
 
@@ -212,4 +321,3 @@ function closeBluerDetail() {
     closePanel();
   }
 }
-

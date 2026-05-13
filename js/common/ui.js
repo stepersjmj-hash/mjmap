@@ -355,7 +355,11 @@ function toggleFavoriteFromList(id, cat, btn) {
   renderFavorites();
 }
 
-function closePanel() { document.getElementById('sidePanel').classList.remove('open'); }
+function closePanel() {
+  document.getElementById('sidePanel').classList.remove('open');
+  // 클러스터 패널 등 패널을 통해 활성화된 마커가 있으면 해제
+  if (typeof clearActiveMarker === 'function') clearActiveMarker();
+}
 
 // ============================================================
 // UI helpers

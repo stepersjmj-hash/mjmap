@@ -23,6 +23,10 @@ const STATE = {
   map: null,
   myLocationMarker: null,
   currentInfoWindow: null,
+  // 현재 선택(활성화)된 마커 — InfoWindow 또는 상세 패널이 열려 있는 동안 시각적으로 강조
+  // setActiveMarker / clearActiveMarker (common/markers.js) 가 관리
+  activeMarker: null,
+  activeMarkerCtx: null, // { cat, item, isFav, rank, isCluster, count } — 아이콘 복구용
   centerPos: { lat: 37.4138, lng: 127.5183 } // 경기도청 부근 (기본값)
 };
 
