@@ -3,18 +3,26 @@
 // 의존: cafe/config.js (LARGE_CAFE_DATA_URL),
 //       common/ui.js (showToast — 런타임 호출 시점엔 정의됨)
 //
-// 원본 JSON 형식:
-//   { source, collectedAt, pageRange, count, cafes: [ ... ] }
-//   각 cafe: id, name, address, jibunAddress, phone, category,
-//            hours{status,weekly{월..일}}, lat, lng, description, parking,
-//            services[], subtitle, mainMenus[], seatOptions[], childOptions[],
-//            tags[], parkingInfo{texts,summary?,has_ai_mate_data},
-//            questions[], thumbnailUrl
-//   ※ 이전 스키마의 rating/reviewCount/detailUrl 은 제거됨 (cafe/detail.js 에서 fallback)
+// 원본 JSON 형식 (2026-05 갱신 — 신 스키마):
+//   최상위 배열 [ { ... }, ... ]   (구 스키마의 { cafes: [...] } 래퍼도 호환)
+//   각 항목: source('kakao'|'naver'), region, keyword, id, name, address, phone,
+//            category(예: "음식점 > 카페 > 커피전문점 > 투썸플레이스"),
+//            x(경도), y(위도), url(카카오맵),
+//            subtitle, description, parking,
+//            mainMenus[], services[], childOptions[], seatOptions[], tags[],
+//            hours{status,weekly{월..일}},
+//            parkingInfo{texts,summary?,has_ai_mate_data},
+//            subwayInfo?, thumbnail,
+//            _matchedPlaceName / _matchedAddr / _matchedCategory
+//   ※ 구 스키마: lat/lng → 신: y/x,  thumbnailUrl → thumbnail,
+//      jibunAddress 제거,  detailUrl → url (카카오맵)
 //
 // 공통 헬퍼(getLatLng/getName/getAddr/getCategory/getDescription)와의 호환을 위해
 // 로딩 직후 각 항목에 alias 필드를 주입한다:
-//   _LAT/_LNG ← lat/lng
+//   _LAT/_LNG ← y/x (구 스키마는 lat/lng)
+//   lat/lng   ← y/x (detail.js 등에서 직접 참조 호환)
+//   thumbnailUrl ← thumbnail (구 스키마 호환)
+//   detailUrl ← url (카카오맵 외부 링크)
 //   제목      ← name
 //   주소      ← address
 //   설명      ← description
@@ -49,9 +57,19 @@ async function loadLargeCafeData() {
     }
 
     // 공통 헬퍼 호환을 위해 alias 필드 주입
+    //   신 스키마(2026-05): 좌표=y/x, 썸네일=thumbnail, 외부링크=url
+    //   구 스키마           : 좌표=lat/lng, 썸네일=thumbnailUrl, 외부링크=detailUrl
     cafes.forEach(c => {
+      // 좌표 — 신 스키마(y/x) → 구 필드(lat/lng) 및 _LAT/_LNG alias 모두 채움
+      if (c.lat == null && c.y != null) c.lat = c.y;
+      if (c.lng == null && c.x != null) c.lng = c.x;
       if (c._LAT == null && c.lat != null) c._LAT = c.lat;
       if (c._LNG == null && c.lng != null) c._LNG = c.lng;
+      // 썸네일 — 신 스키마 thumbnail → 구 필드 thumbnailUrl
+      if (c.thumbnailUrl == null && c.thumbnail) c.thumbnailUrl = c.thumbnail;
+      // 외부 링크 — 신 스키마 url(카카오맵) → 구 필드 detailUrl
+      if (c.detailUrl == null && c.url) c.detailUrl = c.url;
+      // 한국어/공용 alias
       if (c['제목'] == null && c.name) c['제목'] = c.name;
       if (c['주소'] == null && c.address) c['주소'] = c.address;
       if (c['설명'] == null && c.description) c['설명'] = c.description;
