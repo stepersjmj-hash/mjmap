@@ -17,8 +17,9 @@ __pycache__/
 *.bak
 index.html.bak
 
-# 에디터
+# 에디터 / AI 도구 로컬 설정
 .vscode/
+.claude/
 .idea/
 *.swp
 *.swo

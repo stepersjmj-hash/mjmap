@@ -24,6 +24,7 @@
 - 📱 **모바일 반응형**
 - 💬 **정보창 설명 2줄** — 블루리본 식당·특화거리 마커 클릭 시 설명 표시
 - ☕ **대형카페** — KakaoMap·NaverMap "대형카페" 검색 결과 정적 JSON (전국 4,604건), 메뉴·좌석·영업시간·주차·태그 상세 패널 표시
+- 📲 **홈 화면 바로가기 아이콘** — iOS "홈 화면에 추가", Android, 네이버 앱 바로가기에서 크림 배경 지도 아이콘으로 표시 (웹 매니페스트 + apple-touch-icon). 카카오톡 등 링크 공유 미리보기에도 같은 아이콘 사용
 
 ---
 
@@ -191,13 +192,24 @@ python scripts/geocode_bluer.py
 - ⛽ **주유소**: 검색 반경 내 최저가 1~5위에 색상(금·은·동·올리브·테라코타) + 가격 태그
 - 🚚 **푸드트럭** / 🛍️ **특화거리**: 시군·반경 필터 무시, 항상 경기도 전체 표시
 
+**홈 화면 / 앱 바로가기로 추가**
+- **iPhone Safari**: 공유 버튼 → "홈 화면에 추가" → 이름 `경기지도` 로 아이콘 생성
+- **Android Chrome**: 메뉴(⋮) → "홈 화면에 추가" (또는 "앱 설치")
+- **네이버 앱**: 페이지 메뉴 → "바로가기 추가". 아이콘을 추가 시점에 가져오므로, 예전에 만든 글자 아이콘 바로가기는 지우고 다시 추가해야 새 아이콘이 보입니다 (안 바뀌면 페이지를 한 번 새로고침한 뒤 추가)
+- 아이콘 디자인을 바꾸려면 `scripts/make_icons.py` 의 색·좌표를 수정하고 실행 → `icons/*.png` 재생성
+
 ---
 
 ## 파일 구조
 
 ```
 mjmap/
-├── index.html                    # 메인 HTML
+├── index.html                    # 메인 HTML (head 에 apple-touch-icon·manifest·og 태그)
+├── manifest.webmanifest          # 웹 앱 매니페스트 (홈 화면 아이콘·이름·테마색)
+├── icons/
+│   ├── icon-180.png              # iOS apple-touch-icon
+│   ├── icon-192.png              # Android·네이버 앱 바로가기
+│   └── icon-512.png              # 매니페스트 큰 아이콘 / og:image
 ├── proxy.py                      # CORS 프록시 (Python 표준 라이브러리만)
 ├── coordinates.py                # KATEC ↔ WGS84 좌표 변환
 ├── css/styles.css
@@ -230,7 +242,8 @@ mjmap/
 │       ├── data.json             # geocoded 식당 데이터 (geocode_bluer.py 가 생성)
 │       └── data_failed.json      # 매칭 실패 항목 (수동 보정용)
 ├── scripts/
-│   └── geocode_bluer.py          # Kakao Local API 좌표 매칭 (1회성 배치)
+│   ├── geocode_bluer.py          # Kakao Local API 좌표 매칭 (1회성 배치)
+│   └── make_icons.py             # icons/*.png 생성기 (Pillow)
 ├── data/
 │   └── bluer_raw.json            # 블루리본 raw 수집 데이터 (geocoding 입력)
 ├── .env.example                  # 키 템플릿
@@ -291,6 +304,7 @@ mjmap/
 | 블루리본 0개 / "scripts/geocode_bluer.py 실행 필요" 토스트 | `js/bluer/data.json` 미생성 — 위 "블루리본 데이터 갱신" 절차 실행 |
 | 블루리본 변경 반영 안 됨 | 브라우저 캐시 — 하드 리프레시(`Ctrl+Shift+R`) 또는 개발자 도구 "Disable cache" |
 | 즐겨찾기 사라짐 | 브라우저 데이터 삭제 시 localStorage 도 같이 비워짐 |
+| 바로가기 아이콘이 글자(첫 글자)로 나옴 | 바로가기를 만들 때 예전 페이지가 캐시된 경우. 페이지 새로고침 후 기존 바로가기 삭제 → 다시 추가 |
 | 시군 필터 박혀서 0건 | 토스트가 알려줌 — 설정에서 "전체 (필터 없음)" 선택 |
 
 ---

@@ -1,0 +1,16 @@
+{
+  "name": "나만의 경기도 지도",
+  "short_name": "경기지도",
+  "description": "지역화폐 가맹점·주유소 가격·푸드트럭·특화거리·블루리본 식당·대형카페를 한 지도에서",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "ko",
+  "background_color": "#F6F1E7",
+  "theme_color": "#F6F1E7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
